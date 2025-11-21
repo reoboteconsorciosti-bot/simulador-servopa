@@ -38,4 +38,5 @@ ENV NODE_ENV=production
 
 EXPOSE 3001
 
-CMD ["node", "dist/index.js"]
+# Run migrations before starting the app
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
