@@ -78,6 +78,7 @@ const LoginScreen: React.FC<{ onLogin: (email: string, password?: string) => voi
 type View = 'simulator' | 'insights' | 'admin' | 'history';
 
 const MainApp: React.FC = () => {
+    console.log('Frontend Version: Debug-Log-Enabled');
     const { user, logout, updateUser } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
