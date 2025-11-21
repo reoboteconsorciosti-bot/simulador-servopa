@@ -199,7 +199,7 @@ const MainApp: React.FC = () => {
                                     alt="Reobote"
                                     className="h-8 w-8 object-cover rounded-md"
                                 />
-                                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">Simulador Pro</span>
+                                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">Simulador Servopa</span>
                             </div>
                             <div className="hidden md:flex ml-10 space-x-1 relative items-center bg-slate-100 dark:bg-slate-700/50 p-1 rounded-full">
                                 {/* Sliding Pill Background */}
@@ -252,7 +252,7 @@ const MainApp: React.FC = () => {
                                     <div className="text-xs text-slate-500 dark:text-slate-400">{user.profile.role}</div>
                                 </div>
                                 <img
-                                    className="h-8 w-8 rounded-full object-cover border-2 border-slate-200 dark:border-slate-600"
+                                    className="h-10 w-10 rounded-full object-cover border-2 border-slate-200 dark:border-slate-600"
                                     src={user.profile.photoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${user.profile.name.replace(/\s/g, '')}`}
                                     alt={user.profile.name}
                                 />

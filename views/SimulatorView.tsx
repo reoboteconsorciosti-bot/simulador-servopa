@@ -73,6 +73,9 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     if (inputs.credito === '' || Number(inputs.credito) <= 0) newErrors.credito = 'O valor do crédito deve ser maior que zero.';
     if (inputs.qtdMeses === '' || Number(inputs.qtdMeses) <= 0) newErrors.qtdMeses = 'O prazo deve ser maior que zero.';
     if (inputs.taxa === '' || Number(inputs.taxa) <= 0) newErrors.taxa = 'A taxa de administração é obrigatória.';
+    if (Number(inputs.percentualEmbutido) > Number(inputs.percentualOfertado)) {
+      newErrors.percentualEmbutido = 'O lance embutido não pode ser maior que o lance ofertado.';
+    }
     return newErrors;
   };
 
@@ -182,7 +185,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
           <Card title="Configuração do Lance" className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input label="Lance Ofertado (%)" name="percentualOfertado" type="number" step="0.1" value={inputs.percentualOfertado} onChange={handleInputChange} tooltip="Percentual do crédito que o cliente ofertará como lance. Pode incluir o lance embutido." />
-              <Input label="Lance Embutido (%)" name="percentualEmbutido" type="number" step="0.1" value={inputs.percentualEmbutido} onChange={handleInputChange} tooltip="Parte do lance que será descontada do próprio crédito, diminuindo o valor que o cliente recebe." />
+              <Input label="Lance Embutido (%)" name="percentualEmbutido" type="number" step="0.1" value={inputs.percentualEmbutido} onChange={handleInputChange} tooltip="Parte do lance que será descontada do próprio crédito, diminuindo o valor que o cliente recebe." error={errors.percentualEmbutido} />
+              <Input label="Lance Pago (%)" name="lancePago" value={Math.max(0, (Number(inputs.percentualOfertado) || 0) - (Number(inputs.percentualEmbutido) || 0)).toFixed(2)} onChange={() => { }} readOnly tooltip="Calculado automaticamente: Lance Ofertado - Lance Embutido." />
               <Select label="Forma de Abatimento do Lance" name="diluirLance" value={inputs.diluirLance} onChange={handleInputChange} options={[{ value: 1, label: 'Sim (Diluir no prazo restante)' }, { value: 2, label: 'LUDC' }, { value: 3, label: 'Não (Abater parcelas)' }]} tooltip="Define o que acontece com o valor do lance após a contemplação. 'Diluir' reduz o valor das parcelas futuras. 'Abater' quita as últimas parcelas." />
               <Input label="Mês do Lance (Assembleia)" name="lanceNaAssembleia" type="number" min="1" value={inputs.lanceNaAssembleia} onChange={handleInputChange} tooltip="O número da assembleia em que o cliente pretende dar o lance para ser contemplado." />
             </div>

@@ -86,6 +86,7 @@ const Input: React.FC<InputProps> = ({ label, name, value, onChange, type = 'tex
           }`
         }
         {...rest}
+        inputMode={mask === 'currency' || type === 'number' ? 'numeric' : undefined}
       />
       {error && <p className="mt-1.5 text-sm sm:text-xs text-red-600 dark:text-red-400">{error}</p>}
     </div>
