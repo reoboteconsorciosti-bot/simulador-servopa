@@ -1,0 +1,5 @@
+{
+  "name": "Servopa Pro Simulator",
+  "description": "A web application for consortium consultants to perform complex simulations, view insights, and manage user roles, replicating detailed spreadsheet calculations.",
+  "requestFramePermissions": []
+}

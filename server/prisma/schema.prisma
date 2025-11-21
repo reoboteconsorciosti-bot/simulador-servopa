@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  passwordHash  String
+  name          String
+  role          String       @default("Consultor") // Consultor, Supervisor, Gerente, Admin
+  teamId        String?
+  photoUrl      String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  simulations   Simulation[]
+}
+
+model Simulation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  inputs    Json
+  outputs   Json
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Insight {
+  id        String   @id @default(uuid())
+  title     String
+  data      Json
+  createdAt DateTime @default(now())
+}
