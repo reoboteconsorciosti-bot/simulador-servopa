@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 
 export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
+    console.log(`Login attempt for: ${email}`);
 
     try {
         const user = await prisma.user.findUnique({ where: { email } });
@@ -45,6 +46,7 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const register = async (req: Request, res: Response) => {
+    console.log('Registering new user:', req.body.email);
     const { email, password, name, role, teamId, photoUrl } = req.body;
 
     try {
@@ -74,6 +76,7 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const getUsers = async (req: Request, res: Response) => {
+    console.log('Fetching users...');
     try {
         const users = await prisma.user.findMany({
             select: {
