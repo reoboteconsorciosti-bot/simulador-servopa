@@ -1,5 +1,5 @@
 # Stage 1: Build Frontend
-FROM node:20-alpine as frontend-build
+FROM node:20-slim as frontend-build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Build Backend
-FROM node:20-alpine as backend-build
+FROM node:20-slim as backend-build
 WORKDIR /app/server
 COPY server/package*.json ./
 RUN npm ci
@@ -16,8 +16,11 @@ RUN npx prisma generate
 RUN npm run build
 
 # Stage 3: Production
-FROM node:20-alpine
+FROM node:20-slim
 WORKDIR /app
+
+# Install OpenSSL for Prisma
+RUN apt-get update -y && apt-get install -y openssl ca-certificates
 
 # Install production dependencies only for backend if needed, 
 # but here we copy node_modules from build to ensure prisma client is there
