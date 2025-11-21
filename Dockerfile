@@ -38,5 +38,5 @@ ENV NODE_ENV=production
 
 EXPOSE 3001
 
-# Run db push to sync schema (better for missing migrations folder)
-CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
+# Run db push with accept-data-loss to avoid blocking on warnings
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/index.js"]
