@@ -38,5 +38,5 @@ ENV NODE_ENV=production
 
 EXPOSE 3001
 
-# Run migrations before starting the app
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+# Run db push to sync schema (better for missing migrations folder)
+CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
