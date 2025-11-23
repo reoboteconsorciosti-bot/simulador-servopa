@@ -4,12 +4,20 @@ const MAX_HISTORY_ITEMS = 10;
 
 const getHistoryKey = (userId: string): string => `simulationHistory_${userId}`;
 
-export const getHistory = async (): Promise<SavedSimulation[]> => {
+export const getHistory = async (filters?: { userId?: string; teamId?: string }): Promise<SavedSimulation[]> => {
     try {
         const token = localStorage.getItem('sim-pro-token');
         if (!token) return [];
 
-        const response = await fetch('/api/simulations', {
+        let url = '/api/simulations';
+        if (filters) {
+            const params = new URLSearchParams();
+            if (filters.userId) params.append('userId', filters.userId);
+            if (filters.teamId) params.append('teamId', filters.teamId);
+            if (params.toString()) url += `?${params.toString()}`;
+        }
+
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }

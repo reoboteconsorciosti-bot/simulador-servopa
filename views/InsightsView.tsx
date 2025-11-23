@@ -27,21 +27,54 @@ interface InsightsData {
     assetTypes: Record<string, number>;
 }
 
+import Select from '../components/Select';
+import { UserRole } from '../types';
+
 const InsightsView: React.FC = () => {
-    const { user } = useAuth();
+    const { user, users } = useAuth();
     const [history, setHistory] = React.useState<SavedSimulation[]>([]);
     const [loading, setLoading] = React.useState(true);
+    const [selectedUser, setSelectedUser] = React.useState<string>('');
+    const [selectedTeam, setSelectedTeam] = React.useState<string>('');
 
     React.useEffect(() => {
         if (user) {
-            getHistory().then(data => {
+            setLoading(true);
+            getHistory({
+                userId: selectedUser || undefined,
+                teamId: selectedTeam || undefined
+            }).then(data => {
                 setHistory(data);
                 setLoading(false);
             });
         } else {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, selectedUser, selectedTeam]);
+
+    // Filter options
+    const userOptions = React.useMemo(() => {
+        let filteredUsers = users;
+        if (selectedTeam) {
+            filteredUsers = users.filter(u => u.profile.teamId === selectedTeam);
+        }
+        return [
+            { value: '', label: 'Todos os Usuários' },
+            ...filteredUsers.map(u => ({ value: u.uid, label: u.profile.name }))
+        ];
+    }, [users, selectedTeam]);
+
+    const teamOptions = React.useMemo(() => {
+        const teams = Array.from(new Set(users.map(u => u.profile.teamId).filter(Boolean)));
+        return [
+            { value: '', label: 'Todas as Equipes' },
+            ...teams.map(t => ({ value: t as string, label: `Equipe ${t}` }))
+        ];
+    }, [users]);
+
+    const canFilter = user?.profile.role === UserRole.Admin ||
+        user?.profile.role === UserRole.Gerente ||
+        user?.profile.role === UserRole.Supervisor;
 
     const insightsData = useMemo<InsightsData | null>(() => {
         if (!history.length) {
@@ -91,12 +124,39 @@ const InsightsView: React.FC = () => {
         );
     }
 
-    const maxCreditRangeValue = Math.max(...Object.values(insightsData.creditRanges));
+    const maxCreditRangeValue = Math.max(...(Object.values(insightsData.creditRanges) as number[]));
     const totalAssetTypes = insightsData.assetTypes['Imóvel'] + insightsData.assetTypes['Automóvel'];
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Insights & Relatórios</h1>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Insights & Relatórios</h1>
+
+                {canFilter && (
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <div className="w-full sm:w-48">
+                            <Select
+                                label=""
+                                name="teamFilter"
+                                value={selectedTeam}
+                                onChange={(name, val) => setSelectedTeam(val as string)}
+                                options={teamOptions}
+                                placeholder="Filtrar por Equipe"
+                            />
+                        </div>
+                        <div className="w-full sm:w-48">
+                            <Select
+                                label=""
+                                name="userFilter"
+                                value={selectedUser}
+                                onChange={(name, val) => setSelectedUser(val as string)}
+                                options={userOptions}
+                                placeholder="Filtrar por Usuário"
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

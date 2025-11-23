@@ -26,13 +26,81 @@ export const saveSimulation = async (req: AuthRequest, res: Response) => {
 };
 
 export const listSimulations = async (req: AuthRequest, res: Response) => {
-    const userId = req.user.userId;
+    const requestingUserId = req.user.userId;
+    const requestingUserRole = req.user.role;
+
+    // Filters from query params
+    const filterUserId = req.query.userId as string;
+    const filterTeamId = req.query.teamId as string;
 
     try {
+        let whereClause: any = {};
+
+        // Role-based Access Control for Filters
+        if (requestingUserRole === 'Admin') {
+            // Admin can see everything and filter by anything
+            if (filterUserId) whereClause.userId = filterUserId;
+
+            // For team filtering, we need to find users in that team first
+            if (filterTeamId) {
+                const usersInTeam = await prisma.user.findMany({
+                    where: { teamId: filterTeamId },
+                    select: { id: true }
+                });
+                const userIds = usersInTeam.map((u: { id: string }) => u.id);
+
+                // If filtering by both user and team, ensure user belongs to team
+                if (filterUserId) {
+                    if (!userIds.includes(filterUserId)) {
+                        return res.json([]); // User not in team
+                    }
+                    whereClause.userId = filterUserId;
+                } else {
+                    whereClause.userId = { in: userIds };
+                }
+            }
+        } else if (requestingUserRole === 'Gerente' || requestingUserRole === 'Supervisor') {
+            // Managers/Supervisors can see their own data and their team's data
+            // First, get the requester's team
+            const requester = await prisma.user.findUnique({
+                where: { id: requestingUserId },
+                select: { teamId: true }
+            });
+
+            const myTeamId = requester?.teamId;
+
+            if (!myTeamId) {
+                // If no team assigned, can only see own data
+                whereClause.userId = requestingUserId;
+            } else {
+                // Can see data from users in my team
+                const usersInMyTeam = await prisma.user.findMany({
+                    where: { teamId: myTeamId },
+                    select: { id: true }
+                });
+                const teamUserIds = usersInMyTeam.map((u: { id: string }) => u.id);
+
+                if (filterUserId) {
+                    // Can only filter by users within their team
+                    if (teamUserIds.includes(filterUserId)) {
+                        whereClause.userId = filterUserId;
+                    } else {
+                        return res.status(403).json({ message: 'Access denied to this user data' });
+                    }
+                } else {
+                    // Show all team data
+                    whereClause.userId = { in: teamUserIds };
+                }
+            }
+        } else {
+            // Consultants can ONLY see their own data
+            whereClause.userId = requestingUserId;
+        }
+
         const simulations = await prisma.simulation.findMany({
-            where: { userId },
+            where: whereClause,
             orderBy: { createdAt: 'desc' },
-            take: 20
+            take: 100 // Increased limit for insights
         });
 
         // Map to frontend format
