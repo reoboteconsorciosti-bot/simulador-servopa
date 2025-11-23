@@ -76,7 +76,7 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
     const startCountdown = useCallback(() => {
         if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
 
-        countdownIntervalRef.current = setInterval(() => {
+        const update = () => {
             const elapsed = Date.now() - lastActivityRef.current;
             const remaining = SESSION_CONFIG.TIMEOUT_DURATION - elapsed;
 
@@ -85,7 +85,10 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
             } else {
                 setTimeRemaining(remaining);
             }
-        }, 1000); // Update every second
+        };
+
+        update(); // Update immediately
+        countdownIntervalRef.current = setInterval(update, 1000);
     }, [handleSessionExpired]);
 
     // Reset session timer
