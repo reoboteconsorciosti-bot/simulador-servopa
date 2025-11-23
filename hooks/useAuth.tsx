@@ -84,6 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     localStorage.removeItem('sim-pro-user');
     localStorage.removeItem('sim-pro-token');
+    localStorage.removeItem('sim-pro-current-view'); // Reset view to simulator on logout
     setUser(null);
     toast.success('Logout realizado com sucesso!');
   };

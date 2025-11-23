@@ -27,6 +27,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   const [resultTitle, setResultTitle] = useState('Resultados da Simulação');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [webhookMessage, setWebhookMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [progressMessage, setProgressMessage] = useState<string>('');
 
   useEffect(() => {
     if (simulationToLoad && user) {
@@ -112,43 +113,70 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
 
     setIsSubmitting(true);
     setWebhookMessage(null);
+    setProgressMessage('');
 
-    // Garante que os valores numéricos sejam números para o payload
-    const credito = Number(inputs.credito) || 0;
-    const qtdMeses = Number(inputs.qtdMeses) || 0;
-    const taxa = Number(inputs.taxa) || 0;
-    const percentualOfertado = Number(inputs.percentualOfertado) || 0;
-    const percentualEmbutido = Number(inputs.percentualEmbutido) || 0;
+    try {
+      // Step 1: Solicitação recebida
+      setProgressMessage('✓ Solicitação recebida...');
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-    const lanceOfertadoValor = outputs.lanceOfertadoValor || 0;
-    const lanceEmbutidoValor = outputs.lanceEmbutidoValor || 0;
-    const lancePagoValor = lanceOfertadoValor - lanceEmbutidoValor;
+      // Garante que os valores numéricos sejam números para o payload
+      const credito = Number(inputs.credito) || 0;
+      const qtdMeses = Number(inputs.qtdMeses) || 0;
+      const taxa = Number(inputs.taxa) || 0;
+      const percentualOfertado = Number(inputs.percentualOfertado) || 0;
+      const percentualEmbutido = Number(inputs.percentualEmbutido) || 0;
 
-    const payload = {
-      nome: inputs.clienteNome,
-      consultor: inputs.consultorNome,
-      credIndic: formatCurrency(credito),
-      credDisp: formatCurrency(outputs.creditoDisponivel),
-      saDev: formatCurrency(outputs.saldoDevedor),
-      praTotal: qtdMeses,
-      praPos: outputs.parcelasAPagarQtd,
-      vParcaPag: formatCurrency(outputs.parcelasAPagarValor),
-      vParcNorm: formatCurrency(outputs.valorParcela),
-      taxaAdm: `${taxa}%`.replace('.', ','),
-      percLanceOf: formatPercent(percentualOfertado / 100),
-      vLanceOf: formatCurrency(lanceOfertadoValor),
-      percLanceEmb: formatPercent(percentualEmbutido / 100),
-      vLanceEmb: formatCurrency(lanceEmbutidoValor),
-      perRecPro: formatPercent((percentualOfertado - percentualEmbutido) / 100),
-      vRecPro: formatCurrency(lancePagoValor),
-      parcContem: outputs.parcContem,
-      dataSimulacao: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }),
-      tipoBem: inputs.tipoBem,
-    };
+      const lanceOfertadoValor = outputs.lanceOfertadoValor || 0;
+      const lanceEmbutidoValor = outputs.lanceEmbutidoValor || 0;
+      const lancePagoValor = lanceOfertadoValor - lanceEmbutidoValor;
 
-    const response = await sendProposalWebhook(payload);
-    setWebhookMessage({ type: response.success ? 'success' : 'error', text: response.message });
-    setIsSubmitting(false);
+      const payload = {
+        nome: inputs.clienteNome,
+        consultor: inputs.consultorNome,
+        credIndic: formatCurrency(credito),
+        credDisp: formatCurrency(outputs.creditoDisponivel),
+        saDev: formatCurrency(outputs.saldoDevedor),
+        praTotal: qtdMeses,
+        praPos: outputs.parcelasAPagarQtd,
+        vParcaPag: formatCurrency(outputs.parcelasAPagarValor),
+        vParcNorm: formatCurrency(outputs.valorParcela),
+        taxaAdm: `${taxa}%`.replace('.', ','),
+        percLanceOf: formatPercent(percentualOfertado / 100),
+        vLanceOf: formatCurrency(lanceOfertadoValor),
+        percLanceEmb: formatPercent(percentualEmbutido / 100),
+        vLanceEmb: formatCurrency(lanceEmbutidoValor),
+        perRecPro: formatPercent((percentualOfertado - percentualEmbutido) / 100),
+        vRecPro: formatCurrency(lancePagoValor),
+        parcContem: outputs.parcContem,
+        dataSimulacao: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }),
+        tipoBem: inputs.tipoBem,
+      };
+
+      // Step 2: Enviando para formatação
+      setProgressMessage('✓ Solicitação recebida\n⏳ Enviando para formatação...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Step 3: Construindo PDF
+      setProgressMessage('✓ Solicitação recebida\n✓ Enviando para formatação\n⏳ Construindo PDF...');
+
+      // Send webhook
+      const response = await sendProposalWebhook(payload);
+
+      // Step 4: Enviando para WhatsApp
+      if (response.success) {
+        setProgressMessage('✓ Solicitação recebida\n✓ Enviando para formatação\n✓ Construindo PDF\n⏳ Enviando para o WhatsApp...');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setProgressMessage('✓ Solicitação recebida\n✓ Enviando para formatação\n✓ Construindo PDF\n✓ Enviando para o WhatsApp');
+      }
+
+      setWebhookMessage({ type: response.success ? 'success' : 'error', text: response.message });
+    } catch (error) {
+      setWebhookMessage({ type: 'error', text: 'Erro ao gerar proposta. Tente novamente.' });
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setProgressMessage(''), 2000); // Clear progress after 2 seconds
+    }
   };
 
   const percentualParcelaCalculado = useMemo(() => {
@@ -227,6 +255,20 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 <button onClick={handleSendProposal} disabled={isSubmitting || !outputs} className="w-full bg-orange-500 text-white py-4 sm:py-3 rounded-lg hover:bg-orange-600 transition-colors font-bold text-base sm:text-lg shadow-lg shadow-orange-500/30 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:shadow-none">
                   {isSubmitting ? 'Gerando...' : 'Gerar Proposta em PDF'}
                 </button>
+                {progressMessage && (
+                  <div className="mt-4 p-4 rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-start gap-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-blue-900 dark:text-blue-100 whitespace-pre-line">
+                          {progressMessage}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {webhookMessage && (
                   <div className={`mt-4 p-3 rounded-md text-sm text-center ${webhookMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200'}`}>
                     {webhookMessage.text}
