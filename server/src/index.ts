@@ -18,7 +18,19 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // unsafe-eval needed for some dev tools/vite
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https:", "blob:"], // Allow images from any https source (like DiceBear)
+            connectSrc: ["'self'", "https://api.dicebear.com"],
+        },
+    },
+    crossOriginEmbedderPolicy: false, // Disable COEP to allow loading cross-origin resources like images
+}));
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
