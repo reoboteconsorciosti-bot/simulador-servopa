@@ -128,9 +128,19 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
     const handleActivity = useCallback(() => {
         // Only reset if not showing warning (to avoid dismissing warning on accidental activity)
         if (!showWarning) {
+            // Check if session is already expired (e.g. computer woke from sleep)
+            // We check both ref and storage to be safe
+            const lastActivity = parseInt(localStorage.getItem(SESSION_CONFIG.STORAGE_KEY) || lastActivityRef.current.toString());
+            const elapsed = Date.now() - lastActivity;
+
+            if (elapsed >= SESSION_CONFIG.TIMEOUT_DURATION) {
+                handleSessionExpired();
+                return;
+            }
+
             resetTimer();
         }
-    }, [resetTimer, showWarning]);
+    }, [resetTimer, showWarning, handleSessionExpired]);
 
     // Extend session
     const extendSession = useCallback(() => {
