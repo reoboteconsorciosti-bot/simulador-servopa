@@ -106,6 +106,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
         });
     }, [history, filterName, filterDate]);
 
+    // Check if any filters are active
+    const hasActiveFilters = filterName !== '' || filterDate !== '' || selectedUser !== '' || selectedTeam !== '';
+
+    // Clear all filters
+    const handleClearFilters = () => {
+        setFilterName('');
+        setFilterDate('');
+        setSelectedUser('');
+        setSelectedTeam('');
+    };
+
     if (!user) {
         return null;
     }
@@ -114,7 +125,20 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
         <>
             <div className="space-y-6">
                 <div className="flex flex-col gap-4">
-                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Histórico de Simulações</h1>
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Histórico de Simulações</h1>
+                        {hasActiveFilters && (
+                            <button
+                                onClick={handleClearFilters}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Limpar Filtros
+                            </button>
+                        )}
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
                         {canFilterServer && (
@@ -141,7 +165,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
                             label="Buscar Cliente"
                             name="filterName"
                             value={filterName}
-                            onChange={(e) => setFilterName(e.target.value)}
+                            onChange={(name, value) => setFilterName(value as string)}
                             placeholder="Nome do cliente..."
                         />
                         <Input
@@ -149,9 +173,25 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
                             name="filterDate"
                             type="date"
                             value={filterDate}
-                            onChange={(e) => setFilterDate(e.target.value)}
+                            onChange={(name, value) => setFilterDate(value as string)}
                         />
                     </div>
+
+                    {/* Results Counter */}
+                    {history.length > 0 && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <span>
+                                {filteredHistory.length === history.length ? (
+                                    <><strong>{history.length}</strong> {history.length === 1 ? 'simulação' : 'simulações'} no total</>
+                                ) : (
+                                    <><strong>{filteredHistory.length}</strong> de <strong>{history.length}</strong> {history.length === 1 ? 'simulação encontrada' : 'simulações encontradas'}</>
+                                )}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 <Card title="">
@@ -196,12 +236,42 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
                         </>
                     ) : (
                         <div className="text-center py-10">
-                            <p className="text-slate-500 dark:text-slate-400">
-                                Nenhuma simulação encontrada.
-                            </p>
-                            <p className="text-slate-500 dark:text-slate-400 mt-2">
-                                Tente ajustar os filtros ou realize novas simulações.
-                            </p>
+                            {history.length === 0 ? (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium">
+                                        Nenhuma simulação realizada ainda.
+                                    </p>
+                                    <p className="text-slate-400 dark:text-slate-500 text-sm mt-2">
+                                        Realize sua primeira simulação para começar!
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium">
+                                        Nenhuma simulação encontrada com os filtros aplicados.
+                                    </p>
+                                    <p className="text-slate-400 dark:text-slate-500 text-sm mt-2">
+                                        Tente ajustar os filtros ou limpe-os para ver todas as simulações.
+                                    </p>
+                                    {hasActiveFilters && (
+                                        <button
+                                            onClick={handleClearFilters}
+                                            className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Limpar Filtros
+                                        </button>
+                                    )}
+                                </>
+                            )}
                         </div>
                     )}
                 </Card>
@@ -222,3 +292,4 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
 };
 
 export default HistoryView;
+
