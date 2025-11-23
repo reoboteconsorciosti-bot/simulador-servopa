@@ -210,7 +210,39 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
                                     <div key={sim.id} className="bg-slate-50 dark:bg-slate-700/50 p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-slate-100 dark:border-slate-700">
                                         <div className="flex-1 w-full">
                                             <div className="flex justify-between items-start mb-2 sm:mb-0">
-                                                <p className="font-bold text-lg text-slate-800 dark:text-white mb-1">{sim.clienteNome || 'Cliente não informado'}</p>
+                                                <div>
+                                                    <p className="font-bold text-lg text-slate-800 dark:text-white mb-1">{sim.clienteNome || 'Cliente não informado'}</p>
+
+                                                    {/* Contextual Info Badges */}
+                                                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                        {/* Asset Type Badge */}
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${sim.tipoBem === 'Imóvel'
+                                                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                                                                : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                                                            }`}>
+                                                            {sim.tipoBem === 'Imóvel' ? (
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                                                </svg>
+                                                            ) : (
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                                </svg>
+                                                            )}
+                                                            {sim.tipoBem || 'Bem'}
+                                                        </span>
+
+                                                        {/* Consultant Name (Visible to Supervisor+) */}
+                                                        {user?.profile.role !== UserRole.Consultor && sim.consultorNome && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                                </svg>
+                                                                {sim.consultorNome}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                                 <span className="text-xs text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 px-2 py-1 rounded-full border border-slate-200 dark:border-slate-600 sm:hidden">
                                                     {formatDate(sim.timestamp).split(' ')[0]}
                                                 </span>
