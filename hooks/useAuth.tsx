@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useMemo, useEffect } from 'react';
 import { User, UserRole, Profile } from '../types';
+import { useToast } from '../contexts/ToastContext';
 
 // Converte os dados mock para uma lista inicial de usuários
 const createInitialUsers = (): User[] => {
@@ -23,11 +24,12 @@ const createInitialUsers = (): User[] => {
 interface AuthContextType {
   user: User | null;
   users: User[];
-  login: (email: string, password?: string) => void;
+  login: (email: string, password?: string) => Promise<void>;
   logout: () => void;
-  addUser: (profileData: Profile, email: string, password?: string) => void;
-  updateUser: (uid: string, profileData: Profile, password?: string) => void;
-  deleteUser: (uid: string) => void;
+  register: (email: string, password?: string, name?: string) => Promise<void>;
+  addUser: (profileData: Profile, email: string, password?: string) => Promise<void>;
+  updateUser: (uid: string, profileData: Profile, password?: string) => Promise<void>;
+  deleteUser: (uid: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -37,6 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(createInitialUsers());
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     // Check for a logged-in user in localStorage on initial load
@@ -61,17 +64,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         body: JSON.stringify({ email, password })
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        const data = await response.json();
         localStorage.setItem('sim-pro-token', data.token);
         localStorage.setItem('sim-pro-user', JSON.stringify(data.user));
         setUser(data.user);
+        toast.success('Login realizado com sucesso!');
       } else {
-        alert('Login falhou. Verifique suas credenciais.');
+        throw new Error(data.message || 'Login falhou. Verifique suas credenciais.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      alert('Erro ao conectar com o servidor.');
+      toast.error(error.message || 'Erro ao conectar com o servidor.');
+      throw error;
     }
   };
 
@@ -79,6 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('sim-pro-user');
     localStorage.removeItem('sim-pro-token');
     setUser(null);
+    toast.success('Logout realizado com sucesso!');
   };
 
   const fetchUsers = async () => {
@@ -96,6 +103,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
+      toast.error('Erro ao buscar usuários.');
     }
   };
 
@@ -104,6 +112,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       fetchUsers();
     }
   }, [user]);
+
+  const register = async (email: string, password?: string, name?: string) => {
+    // Default profile for self-registration
+    const profileData: Profile = {
+      name: name || email.split('@')[0],
+      role: UserRole.Consultor, // Default role
+      teamId: 'Geral', // Default team
+      photoUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${name || email}`
+    };
+    await addUser(profileData, email, password);
+  };
 
   const addUser = async (profileData: Profile, email: string, password?: string) => {
     try {
@@ -121,16 +140,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (response.ok) {
-        // alert('Usuário criado com sucesso!');
+        toast.success('Usuário criado com sucesso!');
         fetchUsers(); // Refresh list
-        return { success: true };
       } else {
         const errorData = await response.json();
         console.error(`Erro ao criar usuário: ${errorData.message}`);
         throw new Error(errorData.message || 'Erro ao criar usuário');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Add user error:', error);
+      toast.error(error.message || 'Erro ao adicionar usuário.');
       throw error;
     }
   };
@@ -161,19 +180,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (response.ok) {
-        // alert('Usuário atualizado com sucesso!');
+        toast.success('Usuário atualizado com sucesso!');
         fetchUsers(); // Refresh list
 
         // If updating self, refresh local user state
         if (user && user.uid === uid) {
-          setUser(prev => prev ? { ...prev, profile: profileData } : null);
+          const updatedUser = { ...user, profile: profileData };
+          setUser(updatedUser);
+          localStorage.setItem('sim-pro-user', JSON.stringify(updatedUser));
         }
       } else {
         const errorData = await response.json();
         console.error(`Erro ao atualizar usuário: ${errorData.message}`);
+        toast.error(errorData.message || 'Erro ao atualizar usuário.');
       }
     } catch (error) {
       console.error('Update user error:', error);
+      toast.error('Erro ao conectar com o servidor para atualizar usuário.');
     }
   };
 
@@ -182,6 +205,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const token = localStorage.getItem('sim-pro-token');
       if (!token) {
         console.error('No token found');
+        toast.error('Token de autenticação não encontrado.');
         return;
       }
 
@@ -195,25 +219,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (response.ok) {
         // Remove from local state after successful deletion
         setUsers(prevUsers => prevUsers.filter(u => u.uid !== uid));
+        toast.success('Usuário excluído com sucesso!');
       } else {
         const errorData = await response.json();
 
         // Show specific message for last admin protection
         if (response.status === 403) {
-          alert(errorData.message || 'Não é possível excluir o último administrador do sistema.');
+          toast.error(errorData.message || 'Não é possível excluir o último administrador do sistema.');
         } else {
           console.error(`Erro ao excluir usuário: ${errorData.message}`);
-          alert('Erro ao excluir usuário. Tente novamente.');
+          toast.error('Erro ao excluir usuário. Tente novamente.');
         }
       }
     } catch (error) {
       console.error('Delete user error:', error);
-      alert('Erro ao conectar com o servidor.');
+      toast.error('Erro ao conectar com o servidor.');
     }
   };
 
 
-  const value = useMemo(() => ({ user, users, login, logout, addUser, updateUser, deleteUser, loading }), [user, users, loading]);
+  const value = useMemo(() => ({ user, users, login, logout, register, addUser, updateUser, deleteUser, loading }), [user, users, loading]);
 
   // Don't render children until we've checked for a user
   if (loading) {

@@ -1,345 +1,312 @@
-import React, { useState } from 'react';
-import { AuthProvider, useAuth } from './hooks/useAuth';
-import { ThemeProvider, useTheme } from './hooks/useTheme';
-import PasswordInput from './components/PasswordInput';
-import { UserRole, SimulationInputs } from './types';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
+import { UserRole } from './types';
+import Sidebar from './components/Sidebar';
 import SimulatorView from './views/SimulatorView';
-import InsightsView from './views/InsightsView';
-import AdminView from './views/AdminView';
 import HistoryView from './views/HistoryView';
-import UserModal from './components/UserModal';
+import AdminView from './views/AdminView';
+import InsightsView from './views/InsightsView';
+import { ToastProvider, useToast } from './contexts/ToastContext';
 
-const LoginScreen: React.FC<{ onLogin: (email: string, password?: string) => void }> = ({ onLogin }) => {
+// Login Screen Component
+const LoginScreen = () => {
+    const { login, register } = useAuth();
+    const { error: toastError } = useToast();
+    const [isRegistering, setIsRegistering] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        onLogin(email, password);
+        setError('');
+        setLoading(true);
+
+        try {
+            if (isRegistering) {
+                await register(email, password, name);
+            } else {
+                await login(email, password);
+            }
+        } catch (err: any) {
+            console.error(err);
+            const errorMessage = err.response?.data?.message || err.message || 'Ocorreu um erro. Tente novamente.';
+            setError(errorMessage);
+            toastError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-100 dark:bg-gray-900 relative overflow-hidden">
-            {/* Blurred background logo */}
-            <div
-                className="absolute inset-0 bg-cover bg-center opacity-10"
-                style={{
-                    backgroundImage: 'url(/logo_reobote.jpg)',
-                    filter: 'blur(20px) grayscale(50%)',
-                    transform: 'scale(1.1)'
-                }}
-            />
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-200">
+            <div className="sm:mx-auto sm:w-full sm:max-w-md">
+                <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900 dark:text-white">
+                    Simulador Reobote
+                </h2>
+                <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
+                    Consórcios
+                </p>
+            </div>
 
-            <div className="p-8 bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md relative z-10">
-                <div className="text-center mb-6">
-                    {/* Reobote Logo */}
-                    <div className="flex justify-center mb-4">
-                        <img
-                            src="/logo_reobote.jpg"
-                            alt="Reobote Consórcios"
-                            className="h-24 w-auto object-contain rounded-lg"
-                        />
+            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+                <div className="bg-white dark:bg-slate-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-200 dark:border-slate-700">
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                        {isRegistering && (
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Nome Completo
+                                </label>
+                                <div className="mt-1">
+                                    <input
+                                        id="name"
+                                        name="name"
+                                        type="text"
+                                        autoComplete="name"
+                                        required
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        className="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-slate-700 dark:text-white transition-colors"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Endereço de e-mail
+                            </label>
+                            <div className="mt-1">
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-slate-700 dark:text-white transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Senha
+                            </label>
+                            <div className="mt-1">
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="appearance-none block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-slate-700 dark:text-white transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="text-red-600 text-sm text-center bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800">
+                                {error}
+                            </div>
+                        )}
+
+                        <div>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                            >
+                                {loading ? 'Processando...' : (isRegistering ? 'Cadastrar' : 'Entrar')}
+                            </button>
+                        </div>
+                    </form>
+
+                    <div className="mt-6">
+                        <div className="relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-slate-300 dark:border-slate-600" />
+                            </div>
+                            <div className="relative flex justify-center text-sm">
+                                <span className="px-2 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                    Ou
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 grid grid-cols-1 gap-3">
+                            <button
+                                onClick={() => {
+                                    setIsRegistering(!isRegistering);
+                                    setError('');
+                                }}
+                                className="w-full flex justify-center py-2 px-4 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm bg-white dark:bg-slate-700 text-sm font-medium text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+                            >
+                                {isRegistering ? 'Já tenho uma conta' : 'Criar nova conta'}
+                            </button>
+                        </div>
                     </div>
-                    <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Simulador Reobote</h1>
-                    <p className="text-slate-500 dark:text-slate-400">Consórcios</p>
-                </div>
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Digite seu e-mail"
-                        className="w-full px-4 py-3 mb-4 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                        required
-                    />
-                    <PasswordInput
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Digite sua senha"
-                        className="px-4 py-3 mb-4 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
-                        required
-                    />
-                    <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition-colors font-semibold">
-                        Entrar
-                    </button>
-                </form>
-                <div className="mt-6 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-lg">
-                    <p className="font-bold text-center mb-2">Credenciais de Acesso:</p>
-                    <ul className="text-center space-y-1">
-                        <li>Email: admin@servopa.com.br</li>
-                        <li>Senha: admin</li>
-                    </ul>
+
+                    <div className="mt-8 text-xs text-slate-500 dark:text-slate-400">
+                        <p className="font-semibold mb-1">Credenciais de Acesso:</p>
+                        <ul className="list-disc pl-4 space-y-1">
+                            <li>Email: admin@servopa.com.br</li>
+                            <li>Senha: admin</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-type View = 'simulator' | 'insights' | 'admin' | 'history';
+// Protected Route Component
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: UserRole[] }) => {
+    const { user, loading } = useAuth();
+    const location = useLocation();
 
-const MainApp: React.FC = () => {
-    const { user, logout, updateUser } = useAuth();
-    const { theme, toggleTheme } = useTheme();
-
-    // Initialize view from localStorage or default to 'simulator'
-    const [currentView, setCurrentView] = useState<View>(() => {
-        const savedView = localStorage.getItem('sim-pro-current-view');
-        return (savedView as View) || 'simulator';
-    });
-
-    const [simulationToLoad, setSimulationToLoad] = useState<SimulationInputs | null>(null);
-    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
 
     if (!user) {
-        return null; // Should not happen if wrapped correctly
+        return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    const handleLoadSimulation = (simulation: any) => {
-        setSimulationToLoad(simulation);
-        setCurrentView('simulator');
-        setIsMenuOpen(false);
-    };
-
-    const handleSaveProfile = (userData: any) => {
-        if (user && userData.uid === user.uid) {
-            updateUser(user.uid, userData.profile, userData.password);
-            setIsProfileModalOpen(false);
-        }
-    };
-
-    const handleViewChange = (view: View) => {
-        setCurrentView(view);
-        localStorage.setItem('sim-pro-current-view', view);
-        setIsMenuOpen(false);
-    };
-
-    // Navigation Tabs Configuration
-    const tabs: { id: View; label: string }[] = [
-        { id: 'simulator', label: 'Simulador' },
-        { id: 'history', label: 'Histórico' },
-    ];
-
-    if (user.profile.role === UserRole.Admin || user.profile.role === UserRole.Supervisor || user.profile.role === UserRole.Gerente) {
-        tabs.push({ id: 'insights', label: 'Insights' });
+    if (allowedRoles && !allowedRoles.includes(user.profile.role)) {
+        return <Navigate to="/" replace />;
     }
 
-    if (user.profile.role === UserRole.Admin) {
-        tabs.push({ id: 'admin', label: 'Admin' });
-    }
+    return <>{children}</>;
+};
 
-    // Sliding Pill Logic
-    const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
-    const navRefs = React.useRef<{ [key: string]: HTMLButtonElement | null }>({});
-
-    React.useEffect(() => {
-        const element = navRefs.current[currentView];
-
-        if (element) {
-            setPillStyle({
-                left: element.offsetLeft,
-                width: element.offsetWidth,
-                opacity: 1
-            });
+const MainApp = () => {
+    const { user, logout } = useAuth();
+    const [darkMode, setDarkMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('theme') === 'dark' ||
+                (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
         }
-    }, [currentView, user.profile.role]); // Recalculate when currentView changes
+        return false;
+    });
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    const renderView = () => {
-        switch (currentView) {
-            case 'simulator':
-                return <SimulatorView
-                    simulationToLoad={simulationToLoad}
-                    onSimulationLoaded={() => setSimulationToLoad(null)}
-                />;
-            case 'insights':
-                return <InsightsView />;
-            case 'admin':
-                return <AdminView />;
-            case 'history':
-                return <HistoryView
-                    onLoadSimulation={handleLoadSimulation}
-                />;
-            default:
-                return <SimulatorView
-                    simulationToLoad={simulationToLoad}
-                    onSimulationLoaded={() => setSimulationToLoad(null)}
-                />;
+    useEffect(() => {
+        if (darkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
         }
+    }, [darkMode]);
+
+    const toggleTheme = () => {
+        setDarkMode(!darkMode);
     };
 
     return (
-        <div className="min-h-screen bg-slate-100 dark:bg-gray-900 text-slate-900 dark:text-slate-100 overflow-x-hidden">
-            <nav className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16">
-                        <div className="flex items-center">
-                            {/* Mobile menu button */}
-                            <div className="flex items-center md:hidden mr-2">
-                                <button
-                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                                    className="inline-flex items-center justify-center p-3 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors"
-                                    aria-expanded="false"
-                                >
-                                    <span className="sr-only">Open main menu</span>
-                                    {isMenuOpen ? (
-                                        <svg className="block h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="block h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                                        </svg>
-                                    )}
-                                </button>
-                            </div>
+        <Router>
+            <Routes>
+                <Route path="/login" element={!user ? <LoginScreen /> : <Navigate to="/" replace />} />
 
-                            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => handleViewChange('simulator')}>
-                                <img
-                                    src="/logo_reobote.jpg"
-                                    alt="Reobote"
-                                    className="h-8 w-8 object-cover rounded-md"
-                                />
-                                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">Simulador Servopa</span>
-                            </div>
-                            <div className="hidden md:flex ml-10 space-x-1 relative items-center bg-slate-100 dark:bg-slate-700/50 p-1 rounded-full">
-                                {/* Sliding Pill Background */}
-                                <div
-                                    className="absolute bg-white dark:bg-slate-600 rounded-full shadow-sm transition-all duration-300 ease-out h-[calc(100%-8px)] top-1"
-                                    style={{
-                                        left: pillStyle.left,
-                                        width: pillStyle.width,
-                                        opacity: pillStyle.opacity,
-                                    }}
-                                />
+                <Route path="/*" element={
+                    <ProtectedRoute>
+                        <div className="flex h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200 overflow-hidden">
+                            <Sidebar
+                                isOpen={sidebarOpen}
+                                setIsOpen={setSidebarOpen}
+                                userRole={user?.profile.role}
+                                onLogout={logout}
+                            />
 
-                                {tabs.map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        ref={(el) => (navRefs.current[tab.id] = el)}
-                                        onClick={() => handleViewChange(tab.id)}
-                                        className={`relative z-10 px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${currentView === tab.id
-                                            ? 'text-blue-600 dark:text-blue-400'
-                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                                            }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <button
-                                onClick={toggleTheme}
-                                className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                                aria-label="Toggle Theme"
-                            >
-                                {theme === 'dark' ? (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                ) : (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                                    </svg>
-                                )}
-                            </button>
-                            <div
-                                className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 p-2 rounded-lg transition-colors"
-                                onClick={() => setIsProfileModalOpen(true)}
-                            >
-                                <div className="text-right hidden sm:block">
-                                    <div className="text-sm font-medium text-slate-900 dark:text-white">{user.profile.name}</div>
-                                    <div className="text-xs text-slate-500 dark:text-slate-400">{user.profile.role}</div>
-                                </div>
-                                <img
-                                    className="h-10 w-10 rounded-full object-cover border-2 border-slate-200 dark:border-slate-600"
-                                    src={user.profile.photoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${user.profile.name.replace(/\s/g, '')}`}
-                                    alt={user.profile.name}
-                                />
-                            </div>
-                            <button
-                                onClick={logout}
-                                className="text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 text-sm font-medium transition-colors hidden md:block"
-                            >
-                                Sair
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                            <div className="flex-1 flex flex-col overflow-hidden w-full">
+                                <header className="bg-white dark:bg-slate-800 shadow-sm z-10 transition-colors duration-200">
+                                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                                        <div className="flex items-center">
+                                            <button
+                                                onClick={() => setSidebarOpen(true)}
+                                                className="md:hidden p-2 rounded-md text-slate-400 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                                            >
+                                                <span className="sr-only">Open sidebar</span>
+                                                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
 
-                {/* Mobile menu, show/hide based on menu state */}
-                {isMenuOpen && (
-                    <div className="md:hidden bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 absolute w-full left-0 shadow-lg z-50">
-                        <div className="px-4 pt-4 pb-6 space-y-2">
-                            <button
-                                onClick={() => handleViewChange('simulator')}
-                                className={`${currentView === 'simulator' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'} block px-4 py-3 rounded-lg text-base font-medium w-full text-left transition-colors`}
-                            >
-                                Simulador
-                            </button>
-                            <button
-                                onClick={() => handleViewChange('history')}
-                                className={`${currentView === 'history' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'} block px-4 py-3 rounded-lg text-base font-medium w-full text-left transition-colors`}
-                            >
-                                Histórico
-                            </button>
-                            {(user.profile.role === UserRole.Admin || user.profile.role === UserRole.Supervisor || user.profile.role === UserRole.Gerente) && (
-                                <button
-                                    onClick={() => handleViewChange('insights')}
-                                    className={`${currentView === 'insights' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'} block px-4 py-3 rounded-lg text-base font-medium w-full text-left transition-colors`}
-                                >
-                                    Insights
-                                </button>
-                            )}
-                            {user.profile.role === UserRole.Admin && (
-                                <button
-                                    onClick={() => handleViewChange('admin')}
-                                    className={`${currentView === 'admin' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'} block px-4 py-3 rounded-lg text-base font-medium w-full text-left transition-colors`}
-                                >
-                                    Admin
-                                </button>
-                            )}
-                            <div className="pt-2 border-t border-slate-100 dark:border-slate-700 mt-2">
-                                <button
-                                    onClick={logout}
-                                    className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 block px-4 py-3 rounded-lg text-base font-medium w-full text-left transition-colors"
-                                >
-                                    Sair
-                                </button>
+                                        <div className="flex items-center space-x-4">
+                                            <button
+                                                onClick={toggleTheme}
+                                                className="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 focus:outline-none transition-colors"
+                                                title={darkMode ? "Mudar para modo claro" : "Mudar para modo escuro"}
+                                            >
+                                                {darkMode ? (
+                                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                                                    </svg>
+                                                ) : (
+                                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                                                    </svg>
+                                                )}
+                                            </button>
+
+                                            <div className="flex items-center">
+                                                <div className="flex-shrink-0">
+                                                    <img
+                                                        className="h-10 w-10 rounded-full border-2 border-slate-200 dark:border-slate-600"
+                                                        src={user?.profile.photoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${user?.profile.name}`}
+                                                        alt={user?.profile.name}
+                                                    />
+                                                </div>
+                                                <div className="ml-3 hidden sm:block">
+                                                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{user?.profile.name}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">{user?.profile.role}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </header>
+
+                                <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 lg:p-8 transition-colors duration-200">
+                                    <div className="max-w-7xl mx-auto">
+                                        <Routes>
+                                            <Route path="/" element={<SimulatorView />} />
+                                            <Route path="/history" element={<HistoryView onLoadSimulation={(inputs) => console.log('Load', inputs)} />} />
+                                            <Route path="/insights" element={<InsightsView />} />
+                                            <Route path="/admin" element={
+                                                <ProtectedRoute allowedRoles={[UserRole.Admin]}>
+                                                    <AdminView />
+                                                </ProtectedRoute>
+                                            } />
+                                        </Routes>
+                                    </div>
+                                </main>
                             </div>
                         </div>
-                    </div>
-                )}
-            </nav>
-
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {renderView()}
-            </main>
-
-            {isProfileModalOpen && (
-                <UserModal
-                    userToEdit={user}
-                    onClose={() => setIsProfileModalOpen(false)}
-                    onSave={handleSaveProfile}
-                    isProfileMode={true}
-                />
-            )}
-        </div>
+                    </ProtectedRoute>
+                } />
+            </Routes>
+        </Router>
     );
 };
 
-const AppContent: React.FC = () => {
-    const { user, login } = useAuth();
-    return user ? <MainApp /> : <LoginScreen onLogin={login} />;
-};
-
-const App: React.FC = () => {
+const App = () => {
     return (
-        <AuthProvider>
-            <ThemeProvider>
-                <AppContent />
-            </ThemeProvider>
-        </AuthProvider>
+        <ToastProvider>
+            <MainApp />
+        </ToastProvider>
     );
 };
 
