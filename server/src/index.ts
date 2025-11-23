@@ -22,11 +22,11 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // unsafe-eval needed for some dev tools/vite
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com", "https://aistudiocdn.com"], // Allow Tailwind CDN and AI Studio CDN
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.tailwindcss.com"], // Allow Tailwind styles
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:", "blob:"], // Allow images from any https source (like DiceBear)
-            connectSrc: ["'self'", "https://api.dicebear.com"],
+            connectSrc: ["'self'", "https://api.dicebear.com", "https://cdn.tailwindcss.com"], // Allow Tailwind config fetch
         },
     },
     crossOriginEmbedderPolicy: false, // Disable COEP to allow loading cross-origin resources like images
