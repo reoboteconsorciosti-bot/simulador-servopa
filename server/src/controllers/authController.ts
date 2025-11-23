@@ -6,17 +6,17 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(5)
+    email: z.string().email("Por favor, insira um e-mail válido"),
+    password: z.string().min(5, "A senha deve ter no mínimo 5 caracteres")
 });
 
 export const registerSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-    name: z.string().min(2),
+    email: z.string().email("Por favor, insira um e-mail válido"),
+    password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
+    name: z.string().min(2, "O nome deve ter no mínimo 2 caracteres"),
     role: z.enum(['Admin', 'Gerente', 'Supervisor', 'Consultor']).optional(),
     teamId: z.string().optional().nullable(),
-    photoUrl: z.string().url().optional().nullable()
+    photoUrl: z.string().url("A URL da foto deve ser válida").optional().nullable()
 });
 
 export const login = async (req: Request, res: Response) => {
