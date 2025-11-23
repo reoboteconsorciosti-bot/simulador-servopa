@@ -14,6 +14,8 @@ import rateLimit from 'express-rate-limit';
 dotenv.config();
 
 const app = express();
+// Enable trust proxy to allow express-rate-limit to work behind a proxy (like Easypanel/Traefik)
+app.set('trust proxy', 1);
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 
