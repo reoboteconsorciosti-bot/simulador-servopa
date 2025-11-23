@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
+import { useAuth, AuthProvider } from './hooks/useAuth';
 import { UserRole } from './types';
 import Sidebar from './components/Sidebar';
 import SimulatorView from './views/SimulatorView';
@@ -305,7 +305,9 @@ const MainApp = () => {
 const App = () => {
     return (
         <ToastProvider>
-            <MainApp />
+            <AuthProvider>
+                <MainApp />
+            </AuthProvider>
         </ToastProvider>
     );
 };
