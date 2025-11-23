@@ -79,7 +79,7 @@ const LoginScreen: React.FC<{ onLogin: (email: string, password?: string) => voi
 type View = 'simulator' | 'insights' | 'admin' | 'history';
 
 const MainApp: React.FC = () => {
-    const { user, logout, updateUser } = useAuth();
+    const { user, logout, updateUser, users } = useAuth();
     const { theme, toggleTheme } = useTheme();
 
     // Initialize view from localStorage or default to 'simulator'
@@ -323,6 +323,7 @@ const MainApp: React.FC = () => {
                     onClose={() => setIsProfileModalOpen(false)}
                     onSave={handleSaveProfile}
                     isProfileMode={true}
+                    users={users}
                 />
             )}
         </div>

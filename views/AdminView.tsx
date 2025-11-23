@@ -193,7 +193,7 @@ const AdminView: React.FC = () => {
                 </div>
             </Card>
 
-            {isModalOpen && <UserModal userToEdit={editingUser} onClose={handleCloseModal} onSave={handleSaveUser} />}
+            {isModalOpen && <UserModal userToEdit={editingUser} onClose={handleCloseModal} onSave={handleSaveUser} users={users} />}
 
             <ConfirmModal
                 isOpen={deleteConfirmOpen}

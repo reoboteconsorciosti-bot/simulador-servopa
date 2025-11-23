@@ -3,15 +3,17 @@ import { User, UserRole, Profile } from '../types';
 import Input from './Input';
 import Select from './Select';
 import PasswordInput from './PasswordInput';
+import TeamAutocomplete from './TeamAutocomplete';
 
 interface UserModalProps {
     userToEdit: User | null;
     onClose: () => void;
     onSave: (user: User | (Omit<Profile, 'photoUrl'> & { email: string; password?: string; photoUrl?: string })) => void;
     isProfileMode?: boolean; // If true, restricts editing role/team/email
+    users: User[]; // List of all users for team autocomplete
 }
 
-const UserModal: React.FC<UserModalProps> = ({ userToEdit, onClose, onSave, isProfileMode = false }) => {
+const UserModal: React.FC<UserModalProps> = ({ userToEdit, onClose, onSave, isProfileMode = false, users }) => {
     const [formData, setFormData] = useState({
         name: userToEdit?.profile.name || '',
         email: userToEdit?.email || '',
@@ -117,7 +119,14 @@ const UserModal: React.FC<UserModalProps> = ({ userToEdit, onClose, onSave, isPr
                         {!isProfileMode && (
                             <>
                                 <Select label="Cargo" name="role" value={formData.role} onChange={(name, value) => handleChange(name, value as UserRole)} options={roleOptions} />
-                                <Input label="ID da Equipe" name="teamId" value={formData.teamId} onChange={handleChange} />
+                                <TeamAutocomplete
+                                    label="Equipe"
+                                    name="teamId"
+                                    value={formData.teamId}
+                                    onChange={handleChange}
+                                    users={users}
+                                    currentUserRole={formData.role}
+                                />
                             </>
                         )}
 
