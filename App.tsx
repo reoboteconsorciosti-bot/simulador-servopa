@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider, useTheme } from './hooks/useTheme';
 import { ToastProvider } from './contexts/ToastContext';
+import { SessionProvider } from './contexts/SessionContext';
 import PasswordInput from './components/PasswordInput';
 import { UserRole, SimulationInputs } from './types';
 import SimulatorView from './views/SimulatorView';
@@ -9,6 +10,7 @@ import InsightsView from './views/InsightsView';
 import AdminView from './views/AdminView';
 import HistoryView from './views/HistoryView';
 import UserModal from './components/UserModal';
+import SessionWarningModal from './components/SessionWarningModal';
 
 const LoginScreen: React.FC<{ onLogin: (email: string, password?: string) => void }> = ({ onLogin }) => {
     const [email, setEmail] = useState('');
@@ -326,6 +328,9 @@ const MainApp: React.FC = () => {
                     users={users}
                 />
             )}
+
+            {/* Session Warning Modal */}
+            <SessionWarningModal />
         </div>
     );
 };
@@ -339,9 +344,11 @@ const App: React.FC = () => {
     return (
         <ToastProvider>
             <AuthProvider>
-                <ThemeProvider>
-                    <AppContent />
-                </ThemeProvider>
+                <SessionProvider>
+                    <ThemeProvider>
+                        <AppContent />
+                    </ThemeProvider>
+                </SessionProvider>
             </AuthProvider>
         </ToastProvider>
     );
