@@ -3,9 +3,13 @@ import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-import { login, register, getUsers, updateUser, deleteUser } from './controllers/authController';
+import { login, register, getUsers, updateUser, deleteUser, loginSchema, registerSchema } from './controllers/authController';
 import { saveSimulation, listSimulations } from './controllers/simulationController';
 import { authenticateToken } from './middleware/authMiddleware';
+import { validate } from './middleware/validationMiddleware';
+
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -13,12 +17,22 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 
+// Security Middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
+
 // Auth Routes
-app.post('/api/auth/login', login);
-app.post('/api/auth/register', register);
+app.post('/api/auth/login', validate(loginSchema), login);
+app.post('/api/auth/register', validate(registerSchema), register);
 app.get('/api/users', authenticateToken, getUsers); // Protected route
 app.put('/api/users/:id', authenticateToken, updateUser);
 app.delete('/api/users/:id', authenticateToken, deleteUser);
@@ -43,6 +57,15 @@ app.get('*', (req, res) => {
         return res.status(404).json({ message: 'API endpoint not found' });
     }
     res.sendFile(path.join(publicPath, 'index.html'));
+});
+
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error(err.stack);
+    res.status(500).json({
+        message: 'Internal Server Error',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
 });
 
 app.listen(PORT, () => {

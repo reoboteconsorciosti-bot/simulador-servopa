@@ -3,6 +3,22 @@ import { prisma } from '../index';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+import { z } from 'zod';
+
+export const loginSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6)
+});
+
+export const registerSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    name: z.string().min(2),
+    role: z.enum(['Admin', 'Gerente', 'Supervisor', 'Consultor']).optional(),
+    teamId: z.string().optional().nullable(),
+    photoUrl: z.string().url().optional().nullable()
+});
+
 export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
