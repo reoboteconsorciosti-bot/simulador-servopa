@@ -16,7 +16,11 @@ export const registerSchema = z.object({
     name: z.string().min(2, "O nome deve ter no mínimo 2 caracteres"),
     role: z.enum(['Admin', 'Gerente', 'Supervisor', 'Consultor']).optional(),
     teamId: z.string().optional().nullable(),
-    photoUrl: z.string().url("A URL da foto deve ser válida").optional().nullable()
+    photoUrl: z.union([
+        z.string().url("A URL da foto deve ser válida"),
+        z.literal(''),
+        z.null()
+    ]).optional()
 });
 
 export const login = async (req: Request, res: Response) => {
