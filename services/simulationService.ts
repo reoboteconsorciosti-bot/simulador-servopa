@@ -84,17 +84,25 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     // Lance Ofertado "Parcelizado" (Sheets Logic)
     // Converte % em parcelas inteiras e multiplica pelo valor da parcela base
     let C19_lance_ofertado_val = 0;
+    let totalBidParcels = 0; // Total de parcelas ofertadas (Cash + Embutido)
+
     if (percentualOfertadoDecimal > 0) {
       const rawParcels = ((credito * N13) * percentualOfertadoDecimal) / O16;
-      const qtdParcelasOfertadoCalc = round(rawParcels, 0);
-      C19_lance_ofertado_val = qtdParcelasOfertadoCalc * O16;
+      totalBidParcels = round(rawParcels, 0);
+      C19_lance_ofertado_val = totalBidParcels * O16;
     } else {
       C19_lance_ofertado_val = qtdParcelasOfertado * O16;
+      totalBidParcels = qtdParcelasOfertado;
     }
 
     const L21 = ifError(() => ((credito * N13) * percentualEmbutidoDecimal) / O16, 0);
     const D20_qtd_parcelas_embutido = round(L21, 0);
     const C20_lance_embutido_val = D20_qtd_parcelas_embutido * O16;
+
+    // Parcelas em Dinheiro (Cash)
+    // Se o input foi %, totalBidParcels já inclui tudo. Se foi manual, qtdParcelasOfertado é o total.
+    // O lance embutido é sempre uma parte do total.
+    const cashParcels = totalBidParcels - D20_qtd_parcelas_embutido;
 
     const B30_creditoDisponivel = credito - C20_lance_embutido_val;
 
@@ -102,10 +110,14 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const N20_flag_diluir_embutido = diluirLance === 1 ? 1 : 0;
     const N21_flag_abater_parcelas = diluirLance === 3 ? 1 : 0;
 
-    const B28_qtd_parcelas_pagas = 1 + (D20_qtd_parcelas_embutido * N20_flag_diluir_embutido) + (qtdParcelasOfertado * N21_flag_abater_parcelas) + (lanceNaAssembleia - 1);
+    // B28: Parcelas Pagas
+    // Usa cashParcels para contar o que foi efetivamente antecipado com recurso próprio
+    const B28_qtd_parcelas_pagas = 1 + (D20_qtd_parcelas_embutido * N20_flag_diluir_embutido) + (cashParcels * N21_flag_abater_parcelas) + (lanceNaAssembleia - 1);
     const B29_parcelasAPagarQtd = qtdMeses - B28_qtd_parcelas_pagas;
 
-    const L27 = ((qtdParcelasOfertado + D20_qtd_parcelas_embutido) * O15) + O12;
+    // L27: Valor Amortizado (em parcelas)
+    // Deve considerar o TOTAL ofertado (Cash + Embutido) para abater do saldo
+    const L27 = ((cashParcels + D20_qtd_parcelas_embutido) * O15) + O12;
 
     const L28 = N13 - L27;
     const B27_saldoDevedor = L28 * credito;

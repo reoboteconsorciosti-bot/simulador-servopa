@@ -2,14 +2,15 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from './ToastContext';
 
-// Session configuration constants
+// Session configuration
 const SESSION_CONFIG = {
     TIMEOUT_DURATION: 30 * 60 * 1000,      // 30 minutes total
-    WARNING_10_MIN: 20 * 60 * 1000,        // Warning at 20 min (10 min remaining)
-    WARNING_5_MIN: 25 * 60 * 1000,         // Warning at 25 min (5 min remaining)
+    WARNING_10_MIN: 10 * 60 * 1000,        // Warning when 10 min remaining
+    WARNING_5_MIN: 5 * 60 * 1000,          // Warning when 5 min remaining
     EXTENSION_DURATION: 30 * 60 * 1000,    // Extension adds 30 minutes
     ACTIVITY_EVENTS: ['mousedown', 'keydown', 'scroll', 'touchstart', 'mousemove'],
-    STORAGE_KEY: 'sim-pro-last-activity'
+    STORAGE_KEY_EXPIRES: 'sim-pro-session-expires-at',
+    THROTTLE_MS: 30 * 1000 // Only write to storage every 30s to avoid perf issues
 };
 
 interface SessionContextType {
@@ -38,169 +39,170 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
     const { user, logout } = useAuth();
     const toast = useToast();
 
-    const [timeRemaining, setTimeRemaining] = useState(SESSION_CONFIG.TIMEOUT_DURATION);
+    // State
+    const [timeRemaining, setTimeRemaining] = useState<number>(() => {
+        const stored = localStorage.getItem(SESSION_CONFIG.STORAGE_KEY_EXPIRES);
+        if (stored) {
+            const remaining = parseInt(stored, 10) - Date.now();
+            // If expired or invalid, return default (it will be handled by effect)
+            if (isNaN(remaining)) return SESSION_CONFIG.TIMEOUT_DURATION;
+            return Math.max(0, remaining);
+        }
+        return SESSION_CONFIG.TIMEOUT_DURATION;
+    });
     const [showWarning, setShowWarning] = useState(false);
     const [warningLevel, setWarningLevel] = useState<'10min' | '5min' | null>(null);
 
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const lastActivityRef = useRef<number>(Date.now());
-    const hasShown10MinWarning = useRef(false);
-    const hasShown5MinWarning = useRef(false);
+    // Refs for throttling and intervals
+    const lastUpdateRef = useRef<number>(Date.now());
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Clear all timers
-    const clearAllTimers = useCallback(() => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
-        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    // Helper to get expiration time from storage
+    const getExpirationTime = useCallback(() => {
+        const stored = localStorage.getItem(SESSION_CONFIG.STORAGE_KEY_EXPIRES);
+        return stored ? parseInt(stored, 10) : null;
     }, []);
+
+    // Helper to set expiration time (updates storage)
+    const setExpirationTime = useCallback((timestamp: number) => {
+        localStorage.setItem(SESSION_CONFIG.STORAGE_KEY_EXPIRES, timestamp.toString());
+    }, []);
+
+    // Initialize session (or reset)
+    const resetSession = useCallback(() => {
+        const newExpiresAt = Date.now() + SESSION_CONFIG.TIMEOUT_DURATION;
+        setExpirationTime(newExpiresAt);
+        setTimeRemaining(SESSION_CONFIG.TIMEOUT_DURATION);
+        setShowWarning(false);
+        setWarningLevel(null);
+    }, [setExpirationTime]);
 
     // Handle session expiration
     const handleSessionExpired = useCallback(() => {
-        clearAllTimers();
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        localStorage.removeItem(SESSION_CONFIG.STORAGE_KEY_EXPIRES);
         setShowWarning(false);
-        localStorage.removeItem(SESSION_CONFIG.STORAGE_KEY);
         toast.error('Sua sessão expirou por inatividade. Faça login novamente.');
         logout();
-    }, [clearAllTimers, logout, toast]);
+    }, [logout, toast]);
 
-    // Update last activity timestamp
-    const updateLastActivity = useCallback(() => {
-        const now = Date.now();
-        lastActivityRef.current = now;
-        localStorage.setItem(SESSION_CONFIG.STORAGE_KEY, now.toString());
-    }, []);
+    // Main polling loop (runs every 1s)
+    useEffect(() => {
+        if (!user) return;
 
-    // Start countdown interval for warning modal
-    const startCountdown = useCallback(() => {
-        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        // If no expiration set, set it now
+        if (!getExpirationTime()) {
+            resetSession();
+        }
 
-        const update = () => {
-            const elapsed = Date.now() - lastActivityRef.current;
-            const remaining = SESSION_CONFIG.TIMEOUT_DURATION - elapsed;
+        const tick = () => {
+            const expiresAt = getExpirationTime();
+            if (!expiresAt) return;
 
+            const now = Date.now();
+            const remaining = expiresAt - now;
+
+            // Update state
+            setTimeRemaining(Math.max(0, remaining));
+
+            // Check for expiration
             if (remaining <= 0) {
                 handleSessionExpired();
+                return;
+            }
+
+            // Check for warnings
+            if (remaining <= SESSION_CONFIG.WARNING_5_MIN) {
+                if (warningLevel !== '5min') {
+                    setWarningLevel('5min');
+                    setShowWarning(true);
+                }
+            } else if (remaining <= SESSION_CONFIG.WARNING_10_MIN) {
+                if (warningLevel !== '10min') {
+                    setWarningLevel('10min');
+                    setShowWarning(true);
+                }
             } else {
-                setTimeRemaining(remaining);
+                // Clear warning if we have enough time (e.g. after extension)
+                if (showWarning) {
+                    setShowWarning(false);
+                    setWarningLevel(null);
+                }
             }
         };
 
-        update(); // Update immediately
-        countdownIntervalRef.current = setInterval(update, 1000);
+        // Run immediately to avoid flash
+        tick();
+
+        // Start interval
+        intervalRef.current = setInterval(tick, 1000);
+
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, [user, getExpirationTime, handleSessionExpired, resetSession, warningLevel, showWarning]);
+
+    // Handle user activity (Throttled)
+    const handleActivity = useCallback(() => {
+        if (!user) return;
+
+        // Don't extend if warning is showing (user must explicitly click extend)
+        // BUT we should allow activity to extend if it's just normal usage before warning
+        // Wait, the requirement says "Qualquer atividade após estender a sessão resetará o timer".
+        // Usually, if warning is shown, we want explicit action.
+        // If warning is NOT shown, activity auto-extends.
+
+        if (showWarning) return;
+
+        const now = Date.now();
+        // Throttle updates to avoid spamming localStorage
+        if (now - lastUpdateRef.current > SESSION_CONFIG.THROTTLE_MS) {
+            const newExpiresAt = now + SESSION_CONFIG.TIMEOUT_DURATION;
+            setExpirationTime(newExpiresAt);
+            lastUpdateRef.current = now;
+
+            // Sync local state immediately for better UX
+            setTimeRemaining(SESSION_CONFIG.TIMEOUT_DURATION);
+        }
+    }, [user, showWarning, setExpirationTime]);
+
+    // Extend session (Explicit action)
+    const extendSession = useCallback(() => {
+        resetSession();
+        toast.success('Sessão estendida por mais 30 minutos!');
+    }, [resetSession, toast]);
+
+    // Dismiss warning (Logout)
+    const dismissWarning = useCallback(() => {
+        handleSessionExpired();
     }, [handleSessionExpired]);
 
-    // Reset session timer
-    const resetTimer = useCallback(() => {
-        clearAllTimers();
-        updateLastActivity();
-        setShowWarning(false);
-        setWarningLevel(null);
-        setTimeRemaining(SESSION_CONFIG.TIMEOUT_DURATION);
-        hasShown10MinWarning.current = false;
-        hasShown5MinWarning.current = false;
-
-        // Set timeout for session expiration
-        timeoutRef.current = setTimeout(() => {
-            handleSessionExpired();
-        }, SESSION_CONFIG.TIMEOUT_DURATION);
-
-        // Set timeout for 10-minute warning
-        warningTimeoutRef.current = setTimeout(() => {
-            if (!hasShown10MinWarning.current) {
-                hasShown10MinWarning.current = true;
-                setWarningLevel('10min');
-                setShowWarning(true);
-                startCountdown();
-            }
-        }, SESSION_CONFIG.WARNING_10_MIN);
-
-        // Set timeout for 5-minute warning
-        setTimeout(() => {
-            if (!hasShown5MinWarning.current && !showWarning) {
-                hasShown5MinWarning.current = true;
-                setWarningLevel('5min');
-                setShowWarning(true);
-                startCountdown();
-            }
-        }, SESSION_CONFIG.WARNING_5_MIN);
-    }, [clearAllTimers, updateLastActivity, handleSessionExpired, startCountdown, showWarning]);
-
-    // Handle user activity
-    const handleActivity = useCallback(() => {
-        // Only reset if not showing warning (to avoid dismissing warning on accidental activity)
-        if (!showWarning) {
-            // Check if session is already expired (e.g. computer woke from sleep)
-            // We check both ref and storage to be safe
-            const lastActivity = parseInt(localStorage.getItem(SESSION_CONFIG.STORAGE_KEY) || lastActivityRef.current.toString());
-            const elapsed = Date.now() - lastActivity;
-
-            if (elapsed >= SESSION_CONFIG.TIMEOUT_DURATION) {
-                handleSessionExpired();
-                return;
-            }
-
-            resetTimer();
-        }
-    }, [resetTimer, showWarning, handleSessionExpired]);
-
-    // Extend session
-    const extendSession = useCallback(() => {
-        toast.success('Sessão estendida por mais 30 minutos!');
-        resetTimer();
-    }, [resetTimer, toast]);
-
-    // Dismiss warning (user wants to logout)
-    const dismissWarning = useCallback(() => {
-        clearAllTimers();
-        setShowWarning(false);
-        localStorage.removeItem(SESSION_CONFIG.STORAGE_KEY);
-        logout();
-    }, [clearAllTimers, logout]);
-
-    // Initialize session on mount
+    // Setup activity listeners
     useEffect(() => {
-        if (!user) {
-            clearAllTimers();
-            return;
-        }
+        if (!user) return;
 
-        // Check if session expired while page was closed
-        const lastActivity = localStorage.getItem(SESSION_CONFIG.STORAGE_KEY);
-        if (lastActivity) {
-            const elapsed = Date.now() - parseInt(lastActivity);
-            if (elapsed >= SESSION_CONFIG.TIMEOUT_DURATION) {
-                handleSessionExpired();
-                return;
-            }
-        }
+        const onActivity = () => handleActivity();
 
-        // Start session timer
-        resetTimer();
-
-        // Add activity listeners
         SESSION_CONFIG.ACTIVITY_EVENTS.forEach(event => {
-            window.addEventListener(event, handleActivity, { passive: true });
+            window.addEventListener(event, onActivity, { passive: true });
         });
 
-        // Listen for storage changes (multi-tab sync)
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === SESSION_CONFIG.STORAGE_KEY && e.newValue) {
-                lastActivityRef.current = parseInt(e.newValue);
+        // Listen for storage changes (Sync across tabs)
+        const onStorage = (e: StorageEvent) => {
+            if (e.key === SESSION_CONFIG.STORAGE_KEY_EXPIRES) {
+                // If another tab updated the session, we just let the poller pick it up
+                // But we can force a tick if needed. The poller runs every 1s so it's fast enough.
             }
         };
-        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('storage', onStorage);
 
-        // Cleanup
         return () => {
-            clearAllTimers();
             SESSION_CONFIG.ACTIVITY_EVENTS.forEach(event => {
-                window.removeEventListener(event, handleActivity);
+                window.removeEventListener(event, onActivity);
             });
-            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('storage', onStorage);
         };
-    }, [user, resetTimer, handleActivity, handleSessionExpired, clearAllTimers]);
+    }, [user, handleActivity]);
 
     const value: SessionContextType = {
         timeRemaining,
