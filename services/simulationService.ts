@@ -63,7 +63,7 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     // Opção 3: Sem Seguro -> Não aplica nada
 
     const isAutomovel = seguroPrestamista === 1;
-    // const isImovel = seguroPrestamista === 2; // Taxa 0 por enquanto
+    const isImovel = seguroPrestamista === 2; // Taxa 0 na inicial, mas paga L17 na pós
 
     const N27_flag = isAutomovel ? 1 : 0; // Usa L16 apenas se for Automóvel
     const N28_flag = 0; // L17 não é usado nos exemplos fornecidos
@@ -81,9 +81,15 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const O15 = ifError(() => round(O13 / O14, 6), 0);
     const O16 = round(credito * O15, 6);
 
-    let C19_lance_ofertado_val = qtdParcelasOfertado * O16;
+    // Lance Ofertado "Parcelizado" (Sheets Logic)
+    // Converte % em parcelas inteiras e multiplica pelo valor da parcela base
+    let C19_lance_ofertado_val = 0;
     if (percentualOfertadoDecimal > 0) {
-      C19_lance_ofertado_val = (credito * N13) * percentualOfertadoDecimal;
+      const rawParcels = ((credito * N13) * percentualOfertadoDecimal) / O16;
+      const qtdParcelasOfertadoCalc = round(rawParcels, 0);
+      C19_lance_ofertado_val = qtdParcelasOfertadoCalc * O16;
+    } else {
+      C19_lance_ofertado_val = qtdParcelasOfertado * O16;
     }
 
     const L21 = ifError(() => ((credito * N13) * percentualEmbutidoDecimal) / O16, 0);
@@ -106,8 +112,11 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
 
     const L29 = ifError(() => round(L28 / B29_parcelasAPagarQtd, 6), 0);
 
-    const M27_seguro_vida_pos = (L16_CONST * B27_saldoDevedor) * N27_flag;
-    const M28_seguro_garantia_pos = (L17_CONST * B27_saldoDevedor) * (N27_flag + N28_flag);
+    // Seguros Pós-Contemplação
+    // Automóvel: Continua pagando Vida (L16)
+    // Imóvel: Passa a pagar Quebra de Garantia (L17)
+    const M27_seguro_vida_pos = (L16_CONST * B27_saldoDevedor) * (isAutomovel ? 1 : 0);
+    const M28_seguro_garantia_pos = (L17_CONST * B27_saldoDevedor) * (isImovel ? 1 : 0); // Imóvel paga L17 aqui
 
     const C29_parcelasAPagarValor = ifError(() => (L29 * credito) + M27_seguro_vida_pos + M28_seguro_garantia_pos, 0);
 
