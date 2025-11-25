@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Select from '../components/Select';
@@ -16,6 +16,7 @@ interface SimulatorViewProps {
 
 const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimulationLoaded }) => {
   const { user } = useAuth();
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const [inputs, setInputs] = useState<SimulationInputs>(() => {
     // A estrutura do App garante que 'user' exista aqui.
@@ -43,6 +44,11 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
         setResultTitle('Resultados da Simulação');
       }
       onSimulationLoaded();
+
+      // Scroll to results when loading from history
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
   }, [simulationToLoad, onSimulationLoaded, user]);
 
@@ -94,7 +100,11 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     if (results && user) {
       setResultTitle(`Resultados para ${inputs.clienteNome || 'Cliente'}`);
       addToHistory(user.uid, inputs);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Smart scroll to results (works for both mobile/stacked and desktop/side-by-side)
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
   };
 
@@ -230,7 +240,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
         </form>
       </div>
 
-      <div className="lg:w-2/5">
+      <div className="lg:w-2/5 scroll-mt-24" ref={resultsRef}>
         <Card title={resultTitle}>
           {outputs ? (
             <div className="space-y-4 animate-slideUp" key={JSON.stringify(outputs)}>
