@@ -15,7 +15,9 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
     const { user, users } = useAuth();
     const [history, setHistory] = useState<SavedSimulation[]>([]);
     const [loading, setLoading] = useState(true);
-    const [clearConfirmOpen, setClearConfirmOpen] = useState(false); // Kept as it's used later in the original file
+    const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [simulationToDelete, setSimulationToDelete] = useState<string | null>(null);
 
     // Filters
     const [filterName, setFilterName] = useState('');
@@ -65,18 +67,31 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
         setClearConfirmOpen(false);
     };
 
-    const handleDeleteSimulation = async (id: string, e: React.MouseEvent) => {
+    const handleDeleteSimulation = (id: string, e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent card click
-        if (window.confirm('Tem certeza que deseja excluir esta simulação?')) {
-            try {
-                await deleteSimulation(id);
-                // Refresh list
-                fetchHistory();
-            } catch (error) {
-                console.error('Failed to delete simulation:', error);
-                alert('Erro ao excluir simulação');
-            }
+        setSimulationToDelete(id);
+        setDeleteConfirmOpen(true);
+    };
+
+    const confirmDeleteSimulation = async () => {
+        if (!simulationToDelete) return;
+
+        try {
+            await deleteSimulation(simulationToDelete);
+            // Refresh list
+            fetchHistory();
+        } catch (error) {
+            console.error('Failed to delete simulation:', error);
+            alert('Erro ao excluir simulação');
+        } finally {
+            setDeleteConfirmOpen(false);
+            setSimulationToDelete(null);
         }
+    };
+
+    const cancelDeleteSimulation = () => {
+        setDeleteConfirmOpen(false);
+        setSimulationToDelete(null);
     };
 
     const formatCurrency = (value: number | string) => {
@@ -355,6 +370,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
                 onConfirm={confirmClearHistory}
                 onCancel={cancelClearHistory}
                 variant="warning"
+            />
+
+            <ConfirmModal
+                isOpen={deleteConfirmOpen}
+                title="Excluir Simulação"
+                message="Tem certeza que deseja excluir esta simulação? Esta ação não pode ser desfeita."
+                confirmText="Excluir"
+                cancelText="Cancelar"
+                onConfirm={confirmDeleteSimulation}
+                onCancel={cancelDeleteSimulation}
+                variant="danger"
             />
         </>
     );
