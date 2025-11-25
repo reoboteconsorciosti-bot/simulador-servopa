@@ -16,13 +16,18 @@ const ifError = (calculation: () => number, fallback: number): number => {
 };
 
 const getPlanoLightFactor = (planoLightValue: number): number => {
-  // =SE(B13=2,"50%",SE(B13=3,"60%",SE(B13=4,"70%",SE(B13=5,"80%",SE(B13=6,"90%","100%")))))
+  // Value 1: Integral -> 1.0
+  // Value 2: 10% Red -> 0.9
+  // Value 3: 20% Red -> 0.8
+  // Value 4: 30% Red -> 0.7
+  // Value 5: 40% Red -> 0.6
+  // Value 6: 50% Red -> 0.5
   switch (planoLightValue) {
-    case 2: return 0.5;
-    case 3: return 0.6;
+    case 2: return 0.9;
+    case 3: return 0.8;
     case 4: return 0.7;
-    case 5: return 0.8;
-    case 6: return 0.9;
+    case 5: return 0.6;
+    case 6: return 0.5;
     case 1:
     default:
       return 1.0;
