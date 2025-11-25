@@ -40,7 +40,7 @@ export const sendProposalWebhook = async (payload: Record<string, any>): Promise
     if (response.ok) {
       return {
         success: true,
-        message: "PDF enviado para geração com sucesso.",
+        message: "PDF enviado para geração com sucesso.\n\nAguarde 15 segundos para receber o PDF no seu WhatsApp",
       };
     } else {
       const data = await response.json();
