@@ -257,7 +257,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
                                                     {/* Contextual Info Badges */}
                                                     <div className="flex flex-wrap items-center gap-2 mb-3">
                                                         {/* Asset Type Badge */}
-                                                        <span className={`inline - flex items - center px - 2 py - 0.5 rounded text - xs font - medium ${sim.tipoBem === 'Imóvel'
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${sim.tipoBem === 'Imóvel'
                                                             ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
                                                             : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
                                                             } `}>
