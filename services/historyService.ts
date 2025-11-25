@@ -57,3 +57,20 @@ export const addToHistory = async (userId: string, inputs: SimulationInputs): Pr
 export const clearHistory = (userId: string): void => {
     // Not implemented in API yet, but could be added
 };
+
+export const deleteSimulation = async (id: string): Promise<void> => {
+    const token = localStorage.getItem('sim-pro-token');
+    if (!token) throw new Error('No token found');
+
+    const response = await fetch(`/api/simulations/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete simulation');
+    }
+};

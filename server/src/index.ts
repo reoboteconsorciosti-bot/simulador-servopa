@@ -4,7 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { login, register, getUsers, updateUser, deleteUser, loginSchema, registerSchema } from './controllers/authController';
-import { saveSimulation, listSimulations } from './controllers/simulationController';
+import { saveSimulation, listSimulations, deleteSimulation } from './controllers/simulationController';
 import { authenticateToken } from './middleware/authMiddleware';
 import { validate } from './middleware/validationMiddleware';
 
@@ -55,6 +55,7 @@ app.delete('/api/users/:id', authenticateToken, deleteUser);
 // Simulation Routes
 app.post('/api/simulations', authenticateToken, saveSimulation);
 app.get('/api/simulations', authenticateToken, listSimulations);
+app.delete('/api/simulations/:id', authenticateToken, deleteSimulation);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });

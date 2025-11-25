@@ -116,3 +116,33 @@ export const listSimulations = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+export const deleteSimulation = async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+    const requestingUserId = req.user.userId;
+    const requestingUserRole = req.user.role;
+
+    try {
+        const simulation = await prisma.simulation.findUnique({
+            where: { id }
+        });
+
+        if (!simulation) {
+            return res.status(404).json({ message: 'Simulation not found' });
+        }
+
+        // Check permissions: Admin or Owner
+        if (requestingUserRole !== 'Admin' && simulation.userId !== requestingUserId) {
+            return res.status(403).json({ message: 'You do not have permission to delete this simulation' });
+        }
+
+        await prisma.simulation.delete({
+            where: { id }
+        });
+
+        res.json({ message: 'Simulation deleted successfully' });
+    } catch (error) {
+        console.error('Delete simulation error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
