@@ -244,11 +244,11 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 <ResultDisplay label="Lance Ofertado" value={formatCurrency(outputs.lanceOfertadoValor)} />
                 <ResultDisplay label="Lance Embutido" value={formatCurrency(outputs.lanceEmbutidoValor)} />
                 <ResultDisplay label="Lance Pago (Rec. Próprios)" value={formatCurrency(outputs.lanceOfertadoValor - outputs.lanceEmbutidoValor)} />
-                <ResultDisplay label="Crédito Disponível" value={formatCurrency(outputs.creditoDisponivel)} className="text-green-600 dark:text-green-400 font-bold" />
-                <ResultDisplay label="Saldo Devedor" value={formatCurrency(outputs.saldoDevedor)} />
-                <ResultDisplay label="Qtd. Parcelas a Pagar" value={outputs.parcelasAPagarQtd} />
+                <ResultDisplay label="Qtd. Parcelas à Pagar" value={outputs.parcelasAPagarQtd} />
                 <ResultDisplay label="Valor da Nova Parcela" value={formatCurrency(outputs.parcelasAPagarValor)} />
-                <ResultDisplay label="Parcelas já Contempladas" value={outputs.parcContem} />
+                <ResultDisplay label="Parcelas Pagas" value={outputs.parcContem} />
+                <ResultDisplay label="Saldo Devedor" value={formatCurrency(outputs.saldoDevedor)} />
+                <ResultDisplay label="Crédito Disponível" value={formatCurrency(outputs.creditoDisponivel)} className="text-green-600 dark:text-green-400 font-bold text-xl mt-2" />
               </div>
 
               <div className="pt-6">

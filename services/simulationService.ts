@@ -107,12 +107,21 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const B30_creditoDisponivel = credito - C20_lance_embutido_val;
 
     // Flags de Diluir Lance (1 ou 0)
-    const N20_flag_diluir_embutido = diluirLance === 1 ? 1 : 0;
-    const N21_flag_abater_parcelas = diluirLance === 3 ? 1 : 0;
+    // 1: Diluir (Reduz valor da parcela)
+    // 3: Abater (Reduz prazo)
+
+    let parcelasAbatidas = 0;
+    if (diluirLance === 3) {
+      // Se for abater, abate TUDO (Cash + Embutido)
+      parcelasAbatidas = totalBidParcels;
+    } else if (diluirLance === 1) {
+      // Se for diluir, normalmente mantém o prazo e reduz a parcela.
+      // Mas a lógica original abatia o embutido. Vamos manter para não quebrar outros cenários.
+      parcelasAbatidas = D20_qtd_parcelas_embutido;
+    }
 
     // B28: Parcelas Pagas
-    // Usa cashParcels para contar o que foi efetivamente antecipado com recurso próprio
-    const B28_qtd_parcelas_pagas = 1 + (D20_qtd_parcelas_embutido * N20_flag_diluir_embutido) + (cashParcels * N21_flag_abater_parcelas) + (lanceNaAssembleia - 1);
+    const B28_qtd_parcelas_pagas = 1 + parcelasAbatidas + (lanceNaAssembleia - 1);
     const B29_parcelasAPagarQtd = qtdMeses - B28_qtd_parcelas_pagas;
 
     // L27: Valor Amortizado (em parcelas)
