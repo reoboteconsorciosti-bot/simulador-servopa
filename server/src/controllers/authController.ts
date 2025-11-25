@@ -192,3 +192,30 @@ export const deleteUser = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+export const refreshToken = async (req: Request, res: Response) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ message: 'No token provided' });
+    }
+
+    try {
+        // Verify existing token
+        // We accept the token even if it's close to expiring, as long as it's valid
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
+
+        // Issue new token
+        const newToken = jwt.sign(
+            { userId: decoded.userId, email: decoded.email, role: decoded.role },
+            process.env.JWT_SECRET as string,
+            { expiresIn: '30min' }
+        );
+
+        res.json({ token: newToken });
+    } catch (error) {
+        console.error('Refresh token error:', error);
+        return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+};

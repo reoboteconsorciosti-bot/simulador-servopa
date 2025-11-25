@@ -2,25 +2,6 @@ import React, { createContext, useState, useContext, ReactNode, useMemo, useEffe
 import { User, UserRole, Profile } from '../types';
 import { useToast } from '../contexts/ToastContext';
 
-// Converte os dados mock para uma lista inicial de usuários
-const createInitialUsers = (): User[] => {
-  const initialProfiles: { email: string; profile: Omit<Profile, 'photoUrl'> }[] = [
-    { email: 'consultor@servopa.com.br', profile: { name: 'João Consultor', role: UserRole.Consultor, teamId: 'A1' } },
-    { email: 'supervisor@servopa.com.br', profile: { name: 'Maria Supervisora', role: UserRole.Supervisor, teamId: 'A' } },
-    { email: 'admin@servopa.com.br', profile: { name: 'Carlos Admin', role: UserRole.Admin } },
-  ];
-
-  return initialProfiles.map((p, index) => ({
-    uid: `mock-uid-${index + 1}`,
-    email: p.email,
-    profile: {
-      ...p.profile,
-      photoUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${p.profile.name.replace(/\s/g, '')}`
-    }
-  }));
-};
-
-
 interface AuthContextType {
   user: User | null;
   users: User[];
@@ -30,6 +11,7 @@ interface AuthContextType {
   addUser: (profileData: Profile, email: string, password?: string) => Promise<void>;
   updateUser: (uid: string, profileData: Profile, password?: string) => Promise<void>;
   deleteUser: (uid: string) => Promise<void>;
+  refreshSession: () => Promise<boolean>;
   loading: boolean;
 }
 
@@ -37,7 +19,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(createInitialUsers());
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
 
@@ -81,6 +63,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const refreshSession = async (): Promise<boolean> => {
+    try {
+      const token = localStorage.getItem('sim-pro-token');
+      if (!token) return false;
+
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('sim-pro-token', data.token);
+        return true;
+      } else {
+        console.error('Failed to refresh session');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error refreshing session:', error);
+      return false;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('sim-pro-user');
     localStorage.removeItem('sim-pro-token');
@@ -101,6 +109,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
+      } else if (response.status === 401) {
+        // Token expired
+        logout();
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
@@ -239,7 +250,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
 
-  const value = useMemo(() => ({ user, users, login, logout, register, addUser, updateUser, deleteUser, loading }), [user, users, loading]);
+  const value = useMemo(() => ({ user, users, login, logout, register, addUser, updateUser, deleteUser, refreshSession, loading }), [user, users, loading]);
 
   // Don't render children until we've checked for a user
   if (loading) {

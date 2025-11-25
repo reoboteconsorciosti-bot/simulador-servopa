@@ -36,7 +36,7 @@ interface SessionProviderProps {
 }
 
 export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) => {
-    const { user, logout } = useAuth();
+    const { user, logout, refreshSession } = useAuth();
     const toast = useToast();
 
     // State
@@ -167,10 +167,16 @@ export const SessionProvider: React.FC<SessionProviderProps> = ({ children }) =>
     }, [user, showWarning, setExpirationTime]);
 
     // Extend session (Explicit action)
-    const extendSession = useCallback(() => {
-        resetSession();
-        toast.success('Sessão estendida por mais 30 minutos!');
-    }, [resetSession, toast]);
+    const extendSession = useCallback(async () => {
+        const success = await refreshSession();
+        if (success) {
+            resetSession();
+            toast.success('Sessão estendida por mais 30 minutos!');
+        } else {
+            toast.error('Não foi possível estender a sessão. Faça login novamente.');
+            handleSessionExpired();
+        }
+    }, [resetSession, toast, refreshSession, handleSessionExpired]);
 
     // Dismiss warning (Logout)
     const dismissWarning = useCallback(() => {
