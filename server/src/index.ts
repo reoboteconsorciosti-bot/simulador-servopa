@@ -3,7 +3,7 @@ import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-import { login, register, getUsers, updateUser, deleteUser, loginSchema, registerSchema } from './controllers/authController';
+import { login, register, getUsers, updateUser, deleteUser, refreshToken, loginSchema, registerSchema } from './controllers/authController';
 import { saveSimulation, listSimulations, deleteSimulation } from './controllers/simulationController';
 import { authenticateToken } from './middleware/authMiddleware';
 import { validate } from './middleware/validationMiddleware';
@@ -33,6 +33,34 @@ app.use(helmet({
     },
     crossOriginEmbedderPolicy: false, // Disable COEP to allow loading cross-origin resources like images
 }));
+
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
+
+// Auth Routes
+app.post('/api/auth/login', validate(loginSchema), login);
+app.post('/api/auth/register', validate(registerSchema), register);
+app.post('/api/auth/refresh', refreshToken);
+app.get('/api/users', authenticateToken, getUsers); // Protected route
+app.put('/api/users/:id', authenticateToken, updateUser);
+app.delete('/api/users/:id', authenticateToken, deleteUser);
+
+// Simulation Routes
+app.post('/api/simulations', authenticateToken, saveSimulation);
+app.get('/api/simulations', authenticateToken, listSimulations);
+app.delete('/api/simulations/:id', authenticateToken, deleteSimulation);
+
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
+});
 
 // Serve static files from the 'public' directory (frontend build)
 // In Docker, we copy frontend/dist to /app/public
