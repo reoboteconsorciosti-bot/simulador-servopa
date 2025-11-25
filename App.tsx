@@ -66,13 +66,7 @@ const LoginScreen: React.FC<{ onLogin: (email: string, password?: string) => voi
                         Entrar
                     </button>
                 </form>
-                <div className="mt-6 text-sm text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-lg">
-                    <p className="font-bold text-center mb-2">Credenciais de Acesso:</p>
-                    <ul className="text-center space-y-1">
-                        <li>Email: admin@servopa.com.br</li>
-                        <li>Senha: admin</li>
-                    </ul>
-                </div>
+
             </div>
         </div>
     );
