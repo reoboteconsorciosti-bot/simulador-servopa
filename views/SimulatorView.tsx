@@ -77,6 +77,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   const validateInputs = (): Partial<Record<keyof SimulationInputs, string>> => {
     const newErrors: Partial<Record<keyof SimulationInputs, string>> = {};
     if (!inputs.clienteNome.trim()) newErrors.clienteNome = 'O nome do cliente é obrigatório.';
+    if (!inputs.consultorNome.trim()) newErrors.consultorNome = 'O nome do consultor é obrigatório.';
     if (inputs.credito === '' || Number(inputs.credito) <= 0) newErrors.credito = 'O valor do crédito deve ser maior que zero.';
     if (inputs.qtdMeses === '' || Number(inputs.qtdMeses) <= 0) newErrors.qtdMeses = 'O prazo deve ser maior que zero.';
     if (inputs.taxa === '' || Number(inputs.taxa) <= 0) newErrors.taxa = 'A taxa de administração é obrigatória.';
@@ -144,7 +145,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
 
       const payload = {
         nome: inputs.clienteNome,
-        consultor: inputs.consultorNome,
+        consultor: inputs.consultorNome || user.profile.name || 'Consultor Servopa',
         credIndic: formatCurrency(credito),
         credDisp: formatCurrency(outputs.creditoDisponivel),
         saDev: formatCurrency(outputs.saldoDevedor),
@@ -205,7 +206,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
               <div className="md:col-span-2">
                 <Input label="Nome do Cliente" name="clienteNome" value={inputs.clienteNome} onChange={handleInputChange} tooltip="Nome completo do cliente para identificação na proposta." error={errors.clienteNome} />
               </div>
-              <Input label="Nome do Consultor" name="consultorNome" value={inputs.consultorNome} onChange={handleInputChange} tooltip="Seu nome, preenchido automaticamente a partir do seu perfil. Você pode editar este campo se necessário." />
+              <Input label="Nome do Consultor" name="consultorNome" value={inputs.consultorNome} onChange={handleInputChange} tooltip="Seu nome, preenchido automaticamente a partir do seu perfil. Você pode editar este campo se necessário." error={errors.consultorNome} />
               <Select label="Tipo de Bem" name="tipoBem" value={inputs.tipoBem} onChange={handleInputChange} options={[{ value: 'Imóvel', label: 'Imóvel' }, { value: 'Automóvel', label: 'Automóvel' }]} tooltip="Define o tipo de consórcio. Imóveis geralmente têm prazos mais longos." />
             </div>
           </Card>
