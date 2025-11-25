@@ -94,6 +94,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     if (results && user) {
       setResultTitle(`Resultados para ${inputs.clienteNome || 'Cliente'}`);
       addToHistory(user.uid, inputs);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
