@@ -232,7 +232,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
       <div className="lg:w-2/5">
         <Card title={resultTitle}>
           {outputs ? (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-slideUp" key={JSON.stringify(outputs)}>
               <div>
                 <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400">Cenário Inicial</h3>
                 <ResultDisplay label="Crédito Contratado" value={formatCurrency(Number(inputs.credito) || 0)} />

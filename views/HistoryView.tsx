@@ -18,6 +18,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
     const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [simulationToDelete, setSimulationToDelete] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     // Filters
     const [filterName, setFilterName] = useState('');
@@ -76,17 +77,25 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
     const confirmDeleteSimulation = async () => {
         if (!simulationToDelete) return;
 
-        try {
-            await deleteSimulation(simulationToDelete);
-            // Refresh list
-            fetchHistory();
-        } catch (error) {
-            console.error('Failed to delete simulation:', error);
-            alert('Erro ao excluir simulação');
-        } finally {
-            setDeleteConfirmOpen(false);
-            setSimulationToDelete(null);
-        }
+        // Start exit animation
+        setDeletingId(simulationToDelete);
+        setDeleteConfirmOpen(false); // Close modal immediately
+
+        // Wait for animation
+        setTimeout(async () => {
+            try {
+                await deleteSimulation(simulationToDelete);
+                // Refresh list
+                fetchHistory();
+            } catch (error) {
+                console.error('Failed to delete simulation:', error);
+                alert('Erro ao excluir simulação');
+                setDeletingId(null); // Reset if error
+            } finally {
+                setSimulationToDelete(null);
+                setDeletingId(null);
+            }
+        }, 300); // Match animation duration
     };
 
     const cancelDeleteSimulation = () => {
@@ -164,7 +173,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
 
     return (
         <>
-            <div className="space-y-6">
+            <div className="space-y-6 animate-fadeIn">
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                         <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Histórico de Simulações</h1>
@@ -247,8 +256,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onLoadSimulation }) => {
                                 </button>
                             </div>
                             <div className="space-y-4">
-                                {filteredHistory.map((sim) => (
-                                    <div key={sim.id} className="bg-slate-50 dark:bg-slate-700/50 p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-slate-100 dark:border-slate-700">
+                                {filteredHistory.map((sim, index) => (
+                                    <div
+                                        key={sim.id}
+                                        className={`bg-slate-50 dark:bg-slate-700/50 p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-slate-100 dark:border-slate-700 transition-all duration-300 ${deletingId === sim.id ? 'animate-fadeOut' : 'animate-slideUp'
+                                            }`}
+                                        style={{ animationDelay: `${index * 50}ms` }}
+                                    >
                                         <div className="flex-1 w-full">
                                             <div className="flex justify-between items-start mb-2 sm:mb-0">
                                                 <div>
