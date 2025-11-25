@@ -19,18 +19,20 @@ import { WEBHOOK_URL } from '../constants';
  * um ambiente de produção, ela seria substituída pela chamada ao Firestore.
  */
 export const sendProposalWebhook = async (payload: Record<string, any>): Promise<{ success: boolean; message: string }> => {
-  if (!WEBHOOK_URL || WEBHOOK_URL.includes('your-unique-id')) {
-      return {
-          success: false,
-          message: "URL do Webhook não configurado. Por favor, edite `constants.ts`."
-      };
-  }
-  
   try {
-    const response = await fetch(WEBHOOK_URL, {
+    const token = localStorage.getItem('sim-pro-token');
+    if (!token) {
+      return {
+        success: false,
+        message: "Usuário não autenticado. Por favor, faça login novamente."
+      };
+    }
+
+    const response = await fetch('/api/webhook/proposal', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payload),
     });
@@ -41,23 +43,17 @@ export const sendProposalWebhook = async (payload: Record<string, any>): Promise
         message: "PDF enviado para geração com sucesso.",
       };
     } else {
-       // Fornece uma mensagem de erro mais útil para o problema de IP
-      if (response.status === 403) {
-        return {
-          success: false,
-          message: `Erro 403: Acesso negado. O Make.com pode estar bloqueando o IP. (Vide nota em webhookService.ts)`,
-        };
-      }
+      const data = await response.json();
       return {
         success: false,
-        message: `Erro ao enviar dados para geração do PDF. Status: ${response.status}.`,
+        message: data.message || `Erro ao enviar dados. Status: ${response.status}`,
       };
     }
   } catch (error) {
     console.error("Webhook call failed:", error);
     return {
       success: false,
-      message: "Erro de conexão. A chamada direta ao Webhook falhou, possivelmente devido a bloqueio de IP.",
+      message: "Erro de conexão com o servidor.",
     };
   }
 };

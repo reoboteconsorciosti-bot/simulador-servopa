@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import { login, register, getUsers, updateUser, deleteUser, refreshToken, loginSchema, registerSchema } from './controllers/authController';
 import { saveSimulation, listSimulations, deleteSimulation } from './controllers/simulationController';
+import { sendProposal } from './controllers/webhookController';
 import { authenticateToken } from './middleware/authMiddleware';
 import { validate } from './middleware/validationMiddleware';
 
@@ -57,6 +58,9 @@ app.delete('/api/users/:id', authenticateToken, deleteUser);
 app.post('/api/simulations', authenticateToken, saveSimulation);
 app.get('/api/simulations', authenticateToken, listSimulations);
 app.delete('/api/simulations/:id', authenticateToken, deleteSimulation);
+
+// Webhook Routes
+app.post('/api/webhook/proposal', authenticateToken, sendProposal);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
