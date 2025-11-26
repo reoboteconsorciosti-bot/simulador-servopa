@@ -117,12 +117,18 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
 
     let parcelasAbatidas = 0;
     if (diluirLance === 3) {
-      // Se for abater, abate TUDO (Cash + Embutido)
+      // Se for abater, abate TUDO (Cash + Embutido) -> Reduz Prazo
       parcelasAbatidas = totalBidParcels;
     } else if (diluirLance === 1) {
-      // Se for diluir, normalmente mantém o prazo e reduz a parcela.
-      // Mas a lógica original abatia o embutido. Vamos manter para não quebrar outros cenários.
-      parcelasAbatidas = D20_qtd_parcelas_embutido;
+      // Se for diluir, mantém o prazo e reduz a parcela (Pure Dilution)
+      // A lógica anterior abatia o embutido, o que impedia a diluição total.
+      // Agora definimos 0 para garantir que todo o lance reduza o saldo devedor e recalcule a parcela.
+      parcelasAbatidas = 0;
+    } else if (diluirLance === 2) {
+      // LUDC (Lance Utilizado Deduzido do Crédito) - Geralmente abate prazo também
+      // Mas por enquanto vamos manter como 0 (Diluir) ou implementar lógica específica se necessário.
+      // Assumindo comportamento de Diluir para não quebrar sem specs.
+      parcelasAbatidas = 0;
     }
 
     // B28: Parcelas Pagas
