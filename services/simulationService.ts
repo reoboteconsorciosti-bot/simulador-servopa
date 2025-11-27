@@ -45,7 +45,8 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const percentualEmbutido = Number(inputs.percentualEmbutido) || 0;
     const qtdParcelasOfertado = Number(inputs.qtdParcelasOfertado) || 0;
     const lanceNaAssembleia = Number(inputs.lanceNaAssembleia) || 0;
-    const { planoLight, seguroPrestamista, diluirLance } = inputs;
+    const { planoLight, seguroPrestamista } = inputs;
+    const diluirLance = Number(inputs.diluirLance);
 
     // Prevent division by zero if prazo is not set
     if (qtdMeses === 0) {
@@ -116,18 +117,14 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     // 3: Abater (Reduz prazo)
 
     let parcelasAbatidas = 0;
-    if (diluirLance === 3) {
-      // Se for abater, abate TUDO (Cash + Embutido) -> Reduz Prazo
+    if (diluirLance === 1) {
+      // Opção 1: Sim (Abater Prazo) -> Reduz Prazo
       parcelasAbatidas = totalBidParcels;
-    } else if (diluirLance === 1) {
-      // Se for diluir, mantém o prazo e reduz a parcela (Pure Dilution)
-      // A lógica anterior abatia o embutido, o que impedia a diluição total.
-      // Agora definimos 0 para garantir que todo o lance reduza o saldo devedor e recalcule a parcela.
+    } else if (diluirLance === 3) {
+      // Opção 3: Não (abater parcelas) -> Mantém Prazo (Diluir) -> Reduz Valor
       parcelasAbatidas = 0;
     } else if (diluirLance === 2) {
-      // LUDC (Lance Utilizado Deduzido do Crédito) - Geralmente abate prazo também
-      // Mas por enquanto vamos manter como 0 (Diluir) ou implementar lógica específica se necessário.
-      // Assumindo comportamento de Diluir para não quebrar sem specs.
+      // LUDC
       parcelasAbatidas = 0;
     }
 
