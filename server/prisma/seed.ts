@@ -5,29 +5,35 @@ const prisma = new PrismaClient();
 
 async function main() {
     const email = 'admin@servopa.com.br';
-    const password = 'admin'; // Default password
-    const passwordHash = await bcrypt.hash(password, 10);
+    const password = 'admin'; // Senha padrão inicial
+    const name = 'Administrador';
 
-    const user = await prisma.user.upsert({
+    const existingUser = await prisma.user.findUnique({
         where: { email },
-        update: {},
-        create: {
-            email,
-            passwordHash,
-            name: 'Administrador',
-            role: 'Admin',
-        },
     });
 
-    console.log({ user });
+    if (!existingUser) {
+        const passwordHash = await bcrypt.hash(password, 10);
+        await prisma.user.create({
+            data: {
+                email,
+                passwordHash,
+                name,
+                role: 'Admin',
+                teamId: 'Geral',
+            },
+        });
+        console.log(`User ${email} created with password: ${password}`);
+    } else {
+        console.log(`User ${email} already exists.`);
+    }
 }
 
 main()
-    .then(async () => {
-        await prisma.$disconnect();
-    })
-    .catch(async (e) => {
+    .catch((e) => {
         console.error(e);
-        await prisma.$disconnect();
         process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
     });
