@@ -72,26 +72,27 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
 
       if (type === 'ofertado') {
         newOfertado = value;
-        // If Total is less than Embedded, reduce Embedded to match Total
+        // If Ofertado decreases below Embutido, reduce Embutido to match.
         if (newOfertado < newEmbutido) {
           newEmbutido = newOfertado;
         }
       } else if (type === 'embutido') {
-        // UX Improvement: When changing Embedded, preserve the Free Bid (Livre).
-        // Previous logic: Fixed Total, reduced Free.
-        // New logic: Fixed Free, increase Total.
-        // Livre = Ofertado - Embutido
-        // Current Livre = prev.Ofertado - prev.Embutido
-        const currentLivre = Math.max(0, (Number(prev.percentualOfertado) || 0) - (Number(prev.percentualEmbutido) || 0));
-
+        // Embutido changes, Ofertado stays fixed.
+        // Livre adjusts automatically (Livre = Ofertado - Embutido).
+        // Constraint: Embutido cannot exceed Ofertado.
         newEmbutido = value;
-        // New Total = Current Livre + New Embutido
-        newOfertado = currentLivre + newEmbutido;
-
+        if (newEmbutido > newOfertado) {
+          newEmbutido = newOfertado;
+        }
       } else if (type === 'livre') {
-        // Livre = Ofertado - Embutido
-        // So, Ofertado = Livre + Embutido
-        newOfertado = value + newEmbutido;
+        // Livre changes, Ofertado stays fixed.
+        // Embutido adjusts (Embutido = Ofertado - Livre).
+        let newLivre = value;
+        // Constraint: Livre cannot exceed Ofertado.
+        if (newLivre > newOfertado) {
+          newLivre = newOfertado;
+        }
+        newEmbutido = Math.max(0, newOfertado - newLivre);
       }
 
       return {
