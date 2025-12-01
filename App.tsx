@@ -173,7 +173,7 @@ const MainApp: React.FC = () => {
                     backgroundImage: 'url(/favicon_new.jpg)',
                     backgroundRepeat: 'repeat',
                     backgroundPosition: 'center',
-                    backgroundSize: '300px',
+                    backgroundSize: '600px',
                     opacity: 0.05,
                     filter: 'grayscale(100%)'
                 }}
@@ -321,7 +321,7 @@ const MainApp: React.FC = () => {
                 )}
             </nav>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
                 {renderView()}
             </main>
 
