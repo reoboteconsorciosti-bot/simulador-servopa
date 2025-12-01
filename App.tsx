@@ -171,9 +171,9 @@ const MainApp: React.FC = () => {
                 className="fixed inset-0 pointer-events-none z-0"
                 style={{
                     backgroundImage: 'url(/favicon_new.jpg)',
-                    backgroundRepeat: 'no-repeat',
+                    backgroundRepeat: 'repeat',
                     backgroundPosition: 'center',
-                    backgroundSize: '800px',
+                    backgroundSize: '300px',
                     opacity: 0.05,
                     filter: 'grayscale(100%)'
                 }}
