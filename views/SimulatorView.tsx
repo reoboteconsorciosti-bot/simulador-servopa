@@ -53,7 +53,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     }
   }, [simulationToLoad, onSimulationLoaded, user]);
 
-  const handleInputChange = (name: string, value: string | number) => {
+  const handleInputChange = (name: string, value: string | number | boolean) => {
     setInputs(prev => ({ ...prev, [name]: value }));
     setWebhookMessage(null);
     if (errors[name as keyof SimulationInputs]) {
@@ -65,40 +65,56 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     }
   };
 
-  const handleBidChange = (type: 'ofertado' | 'embutido' | 'livre', value: number) => {
+  const handleBidChange = (type: 'ofertado' | 'embutido' | 'livre' | 'fgts', value: number) => {
     setInputs(prev => {
       let newOfertado = Number(prev.percentualOfertado) || 0;
       let newEmbutido = Number(prev.percentualEmbutido) || 0;
+      let newFgts = type === 'fgts' ? value : (Number(prev.percentualFgts) || 0);
+
+      // If FGTS is disabled, force it to 0 for calculation (though input might keep value)
+      if (!prev.lanceComFgts && type !== 'fgts') newFgts = 0;
 
       if (type === 'ofertado') {
         newOfertado = value;
-        // If Ofertado decreases below Embutido, reduce Embutido to match.
-        if (newOfertado < newEmbutido) {
-          newEmbutido = newOfertado;
+        // If Ofertado decreases, we might need to reduce Embutido or FGTS? 
+        // Usually we reduce Livre first.
+        // If Ofertado < (Embutido + FGTS), we need to reduce something.
+        // Let's reduce Embutido first? Or just clamp?
+        // Let's just ensure Embutido + FGTS <= Ofertado.
+        if (newEmbutido + newFgts > newOfertado) {
+          // Reduce Embutido first
+          newEmbutido = Math.max(0, newOfertado - newFgts);
         }
       } else if (type === 'embutido') {
-        // Embutido changes, Ofertado stays fixed.
-        // Livre adjusts automatically (Livre = Ofertado - Embutido).
-        // Constraint: Embutido cannot exceed Ofertado.
         newEmbutido = value;
-        if (newEmbutido > newOfertado) {
-          newEmbutido = newOfertado;
+        // Constraint: Embutido + FGTS cannot exceed Ofertado?
+        // Or should Ofertado increase?
+        // Previous logic: Ofertado fixed, Livre adjusts.
+        if (newEmbutido + newFgts > newOfertado) {
+          newEmbutido = Math.max(0, newOfertado - newFgts);
+        }
+      } else if (type === 'fgts') {
+        // FGTS changes. Ofertado fixed.
+        // Constraint: Embutido + FGTS <= Ofertado.
+        if (newEmbutido + newFgts > newOfertado) {
+          newFgts = Math.max(0, newOfertado - newEmbutido);
         }
       } else if (type === 'livre') {
-        // Livre changes, Ofertado stays fixed.
-        // Embutido adjusts (Embutido = Ofertado - Livre).
-        let newLivre = value;
-        // Constraint: Livre cannot exceed Ofertado.
-        if (newLivre > newOfertado) {
-          newLivre = newOfertado;
-        }
-        newEmbutido = Math.max(0, newOfertado - newLivre);
+        // Livre changes. Ofertado fixed? No, Livre usually increases Total if needed?
+        // Previous logic: "Livre changes, Ofertado stays fixed" -> This implies Livre is calculated.
+        // But if user EDITS Livre, they want to change the result.
+        // If I edit Livre, and Total is fixed, then Embutido must change?
+        // Or Total must change?
+        // The previous logic was: "newOfertado = value + newEmbutido".
+        // Now it should be: "newOfertado = value + newEmbutido + newFgts".
+        newOfertado = value + newEmbutido + newFgts;
       }
 
       return {
         ...prev,
         percentualOfertado: newOfertado,
-        percentualEmbutido: newEmbutido
+        percentualEmbutido: newEmbutido,
+        percentualFgts: newFgts
       };
     });
   };
@@ -230,13 +246,19 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   const lanceLivreCalculado = useMemo(() => {
     const ofertado = Number(inputs.percentualOfertado) || 0;
     const embutido = Number(inputs.percentualEmbutido) || 0;
-    return Math.max(0, ofertado - embutido);
-  }, [inputs.percentualOfertado, inputs.percentualEmbutido]);
+    const fgts = inputs.lanceComFgts ? (Number(inputs.percentualFgts) || 0) : 0;
+    return Math.max(0, ofertado - embutido - fgts);
+  }, [inputs.percentualOfertado, inputs.percentualEmbutido, inputs.percentualFgts, inputs.lanceComFgts]);
 
 
   const parcelaEstimada = useMemo(() => {
     const tempOutputs = calculateSimulation(inputs);
     return tempOutputs ? tempOutputs.valorParcela : 0;
+  }, [inputs]);
+
+  const demaisParcelasEstimada = useMemo(() => {
+    const tempOutputs = calculateSimulation(inputs);
+    return tempOutputs ? tempOutputs.valorDemaisParcelas : 0;
   }, [inputs]);
 
   const reactiveResults = useMemo(() => {
@@ -258,25 +280,90 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
               <Input label="Prazo (meses)" name="qtdMeses" type="number" min="1" value={inputs.qtdMeses} onChange={handleInputChange} tooltip="Prazo total." error={errors.qtdMeses} />
 
               <Input label="Taxa de Administração (%)" name="taxa" type="number" step="0.1" value={inputs.taxa} onChange={handleInputChange} tooltip="Taxa administrativa total." error={errors.taxa} />
+
+              {/* Row 2: Fundo Reserva, Reajuste */}
               <Input label="Fundo de Reserva (%)" name="fundoReserva" type="number" step="0.1" value={inputs.fundoReserva} onChange={handleInputChange} tooltip="Fundo de reserva total." />
 
-              <Select label="Tipo de Bem" name="tipoBem" value={inputs.tipoBem} onChange={handleInputChange} options={[{ value: 'Imóvel', label: 'Imóvel' }, { value: 'Automóvel', label: 'Automóvel' }]} tooltip="Tipo do consórcio." />
-              <Select label="Redutor de Parcela" name="planoLight" value={inputs.planoLight} onChange={handleInputChange} options={[{ value: 1, label: 'Integral (Sem redução)' }, { value: 2, label: '10% de Redução' }, { value: 3, label: '20% de Redução' }, { value: 4, label: '30% de Redução' }, { value: 5, label: '40% de Redução' }, { value: 6, label: '50% de Redução' }]} tooltip="Opção de parcela reduzida." />
-
-              <SegmentedControl
-                label="Seguro Prestamista"
-                name="seguroPrestamista"
-                value={inputs.seguroPrestamista}
-                onChange={(val) => handleInputChange('seguroPrestamista', val)}
-                options={[{ value: 1, label: 'Automóvel' }, { value: 2, label: 'Imóvel' }, { value: 3, label: 'Sem Seguro' }]}
-                tooltip="Tipo de seguro a ser aplicado."
+              <Select
+                label="Tipo de Reajuste"
+                name="tipoReajuste"
+                value={inputs.tipoReajuste}
+                onChange={handleInputChange}
+                options={[
+                  { value: 'Cota - Semestral', label: 'Cota - Semestral' },
+                  { value: 'Cota - Anual', label: 'Cota - Anual' },
+                  { value: 'Cota - Mensal', label: 'Cota - Mensal' },
+                  { value: 'Grupo - Anual', label: 'Grupo - Anual' },
+                  { value: 'Grupo - Semestral', label: 'Grupo - Semestral' },
+                  { value: 'Grupo - Mensal', label: 'Grupo - Mensal' }
+                ]}
               />
+              <Input label="% Reajuste" name="percentualReajuste" type="number" step="0.01" value={inputs.percentualReajuste} onChange={handleInputChange} />
+
+              {/* Row 3: Seguro Prestamista */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center">
+                  <Toggle label="Seguro Prestamista" checked={inputs.seguroPrestamista} onChange={(val) => handleInputChange('seguroPrestamista', val)} tooltip="Ativar seguro prestamista." />
+                </div>
+                {inputs.seguroPrestamista && (
+                  <>
+                    <Select
+                      label="Tipo Seguro"
+                      name="tipoSeguro"
+                      value={inputs.tipoSeguro}
+                      onChange={handleInputChange}
+                      options={[{ value: 'Automóvel', label: 'Automóvel' }, { value: 'Imóvel', label: 'Imóvel' }]}
+                    />
+                    <Input label="% Seguro" name="percentualSeguro" type="number" step="0.0001" value={inputs.percentualSeguro} onChange={handleInputChange} />
+                  </>
+                )}
+              </div>
+
+              {/* Row 4: Redutor de Parcela */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center">
+                  <Toggle label="Redutor de Parcela" checked={inputs.planoLight} onChange={(val) => handleInputChange('planoLight', val)} tooltip="Ativar plano light/redutor." />
+                </div>
+                {inputs.planoLight && (
+                  <>
+                    <Input label="% Redutor" name="percentualRedutor" type="number" step="0.01" value={inputs.percentualRedutor} onChange={handleInputChange} />
+                    <Select
+                      label="Redução Sobre"
+                      name="reducaoSobre"
+                      value={inputs.reducaoSobre}
+                      onChange={handleInputChange}
+                      options={[{ value: 'Parcela Total', label: 'Parcela Total' }, { value: 'Fundo Comum', label: 'Fundo Comum' }]}
+                    />
+                  </>
+                )}
+              </div>
+
+              {/* Row 5: Taxa de Adesão */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center">
+                  <Toggle label="Taxa de Adesão" checked={inputs.taxaAdesao} onChange={(val) => handleInputChange('taxaAdesao', val)} />
+                </div>
+                {inputs.taxaAdesao && (
+                  <>
+                    <Input label="% Taxa de Adesão" name="percentualAdesao" type="number" step="0.01" value={inputs.percentualAdesao} onChange={handleInputChange} />
+                    <Input label="Meses Taxa de Adesão" name="mesesAdesao" type="number" value={inputs.mesesAdesao} onChange={handleInputChange} />
+                  </>
+                )}
+              </div>
+
+              <Select label="Tipo de Bem" name="tipoBem" value={inputs.tipoBem} onChange={handleInputChange} options={[{ value: 'Imóvel', label: 'Imóvel' }, { value: 'Automóvel', label: 'Automóvel' }]} tooltip="Tipo do consórcio." />
 
               <Input label="% da Parcela" name="percentualParcela" value={`${(percentualParcelaCalculado * 100).toFixed(3)}% `.replace('.', ',')} onChange={() => { }} readOnly tooltip="Cálculo automático do percentual mensal do crédito." />
 
-              <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center">
-                <span className="font-semibold text-blue-800 dark:text-blue-200">Parcela Inicial Estimada:</span>
-                <span className="font-bold text-xl text-blue-600 dark:text-blue-400">{formatCurrency(parcelaEstimada)}</span>
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center border border-blue-100 dark:border-blue-800">
+                  <span className="font-semibold text-blue-800 dark:text-blue-200">Parcela Inicial:</span>
+                  <span className="font-bold text-xl text-blue-600 dark:text-blue-400">{formatCurrency(parcelaEstimada)}</span>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center border border-blue-100 dark:border-blue-800">
+                  <span className="font-semibold text-blue-800 dark:text-blue-200">Demais Parcelas:</span>
+                  <span className="font-bold text-xl text-blue-600 dark:text-blue-400">{formatCurrency(demaisParcelasEstimada)}</span>
+                </div>
               </div>
             </div>
           </Card>
@@ -286,6 +373,22 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Select label="Tipo de Lance" name="diluirLance" value={inputs.diluirLance} onChange={handleInputChange} options={[{ value: 1, label: 'Sim (Abater Prazo)' }, { value: 2, label: 'LUDC' }, { value: 3, label: 'Não (abater parcelas)' }]} tooltip="Como o lance será utilizado." />
               <Input label="Mês da Contemplação" name="lanceNaAssembleia" type="number" min="1" value={inputs.lanceNaAssembleia} onChange={handleInputChange} tooltip="Previsão de contemplação." />
+
+              {/* FGTS */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center">
+                  <Toggle label="Lance com FGTS" checked={inputs.lanceComFgts} onChange={(val) => handleInputChange('lanceComFgts', val)} />
+                </div>
+                {inputs.lanceComFgts && (
+                  <CurrencyPercentInput
+                    label="% Lance com FGTS"
+                    name="percentualFgts"
+                    value={Number(inputs.percentualFgts) || ''}
+                    onChange={(name, val) => handleBidChange('fgts', val)}
+                    credit={Number(inputs.credito) || 0}
+                  />
+                )}
+              </div>
 
               <CurrencyPercentInput
                 label="Lance Ofertado"

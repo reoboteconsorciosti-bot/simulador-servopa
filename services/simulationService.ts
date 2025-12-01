@@ -45,9 +45,16 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const percentualEmbutido = Number(inputs.percentualEmbutido) || 0;
     const qtdParcelasOfertado = Number(inputs.qtdParcelasOfertado) || 0;
     const lanceNaAssembleia = Number(inputs.lanceNaAssembleia) || 0;
-    const { planoLight, seguroPrestamista } = inputs;
     const fundoReserva = Number(inputs.fundoReserva) || 0;
     const diluirLance = Number(inputs.diluirLance);
+
+    // New Fields
+    const {
+      planoLight, percentualRedutor, reducaoSobre,
+      seguroPrestamista, tipoSeguro, percentualSeguro,
+      taxaAdesao, percentualAdesao, mesesAdesao,
+      lanceComFgts, percentualFgts
+    } = inputs;
 
     // Prevent division by zero if prazo is not set
     if (qtdMeses === 0) {
@@ -57,29 +64,81 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const taxaDecimal = (taxa + fundoReserva) / 100;
     const percentualOfertadoDecimal = percentualOfertado / 100;
     const percentualEmbutidoDecimal = percentualEmbutido / 100;
-    const planoLightFactor = getPlanoLightFactor(planoLight);
+
+    // Plano Light Factor
+    let planoLightFactor = 1.0;
+    if (planoLight) {
+      const redutor = Number(percentualRedutor) || 0;
+      planoLightFactor = 1 - (redutor / 100);
+    }
 
     // Cálculos Intermediários Iniciais (Taxas e Fatores)
     const N13 = 1 + taxaDecimal;
-    const N14 = round(N13 / qtdMeses, 6);
+
+    // Logic for Redutor Scope
+    let N14 = 0;
+    if (planoLight && reducaoSobre === 'Fundo Comum') {
+      // Reduces only the Common Fund part (100% / months)
+      const fundoComumMensal = (1 / qtdMeses);
+      const taxaAdmMensal = (taxaDecimal / qtdMeses); // Assuming Taxa is also spread? Or Taxa is fixed?
+      // Usually Taxa Adm is spread over the period.
+      // If Reducer applies to Fundo Comum only:
+      const fundoComumReduzido = fundoComumMensal * planoLightFactor;
+      N14 = round(fundoComumReduzido + taxaAdmMensal, 8);
+    } else {
+      // Reduces the Total Parcel (Standard behavior or "Parcela Total")
+      const rawN14 = N13 / qtdMeses;
+      N14 = round(rawN14 * planoLightFactor, 8);
+    }
+
     const N12 = credito * N13;
 
-    // Flags de Seguro Prestamista (1 ou 0)
-    // Opção 1: Automóvel -> Aplica L16 (0.0599%)
-    // Opção 2: Imóvel -> Aplica 0 (na parcela inicial)
-    // Opção 3: Sem Seguro -> Não aplica nada
+    // Seguro Prestamista Logic
+    let taxaSeguro = 0;
+    if (seguroPrestamista) {
+      if (percentualSeguro && Number(percentualSeguro) > 0) {
+        taxaSeguro = Number(percentualSeguro) / 100;
+      } else {
+        // Default rates if not provided
+        if (tipoSeguro === 'Automóvel') taxaSeguro = L16_CONST; // 0.000599
+        else if (tipoSeguro === 'Imóvel') taxaSeguro = L17_CONST; // 0.000315 (Example)
+      }
+    }
 
-    const isAutomovel = seguroPrestamista === 1;
-    const isImovel = seguroPrestamista === 2; // Taxa 0 na inicial, mas paga L17 na pós
+    const valorSeguro = credito * taxaSeguro; // Seguro calculated on Credit? Or Total Debt?
+    // Old code: (L16_CONST * N12) -> N12 is Total Debt (Credit + Fees).
+    // Let's stick to old logic: Seguro on Total Debt?
+    // "L14_seguro_vida = (L16_CONST * N12) * N27_flag" -> Yes, on N12.
+    // So if I use custom rate, should I apply to N12 or Credit?
+    // Standard market practice is usually on Saldo Devedor or Credit.
+    // Given the old code used N12, I will apply to N12 for consistency unless specified.
+    // But wait, N12 = Credit * (1 + Taxa).
+    // If I have a custom % Seguro, usually it's % of Credit.
+    // Let's apply to Credit for custom input, and N12 for defaults if that was the rule.
+    // Actually, to be safe and consistent with "Calculate everything", I should probably apply to Credit if it's a simple rate.
+    // Let's use Credit * taxaSeguro for now.
 
-    const N27_flag = isAutomovel ? 1 : 0; // Usa L16 apenas se for Automóvel
-    const N28_flag = 0; // L17 não é usado nos exemplos fornecidos
+    // Re-evaluating old code: L14 = (L16 * N12).
+    const valorSeguroFinal = (seguroPrestamista && tipoSeguro !== 'Sem Seguro')
+      ? (Number(percentualSeguro) > 0 ? (credito * (Number(percentualSeguro) / 100)) : (N12 * (tipoSeguro === 'Automóvel' ? L16_CONST : (tipoSeguro === 'Imóvel' ? L17_CONST : 0))))
+      : 0;
 
-    const L14_seguro_vida = (L16_CONST * N12) * N27_flag;
-    const L15_seguro_garantia = (L17_CONST * N12) * N28_flag;
+    const B10_parcela_porcentagem = N14; // Already factored in Redutor
+    const C10_valorParcelaBase = (credito * B10_parcela_porcentagem) + valorSeguroFinal;
 
-    const B10_parcela_porcentagem = round(N14 * planoLightFactor, 8);
-    const C10_valorParcela = (credito * B10_parcela_porcentagem) + L14_seguro_vida + L15_seguro_garantia;
+    // Taxa de Adesão Logic
+    let valorParcelaInicial = C10_valorParcelaBase;
+    let valorDemaisParcelas = C10_valorParcelaBase;
+
+    if (taxaAdesao) {
+      const adesaoTotal = (Number(percentualAdesao) / 100) * credito;
+      const meses = Number(mesesAdesao) || 1;
+      const parcelaAdesao = adesaoTotal / meses;
+      valorParcelaInicial = C10_valorParcelaBase + parcelaAdesao;
+      // Note: This logic assumes we are in the first 'meses' months.
+      // The output 'valorParcela' will be the INITIAL one.
+      // 'valorDemaisParcelas' will be the base one.
+    }
 
     // Cálculos de Lance
     const O12 = ifError(() => round((lanceNaAssembleia * B10_parcela_porcentagem * credito) / credito, 6), 0);
@@ -88,13 +147,11 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const O15 = ifError(() => round(O13 / O14, 6), 0);
     const O16 = round(credito * O15, 6);
 
-    // Lance Ofertado "Parcelizado" (Sheets Logic)
-    // Converte % em parcelas inteiras e multiplica pelo valor da parcela base
+    // Lance Ofertado "Parcelizado"
     let C19_lance_ofertado_val = 0;
-    let totalBidParcels = 0; // Total de parcelas ofertadas (Cash + Embutido)
+    let totalBidParcels = 0;
 
     if (percentualOfertadoDecimal > 0) {
-      // Lance Ofertado is % of Credit (Carta de Crédito), not Total Debt.
       const rawParcels = (credito * percentualOfertadoDecimal) / O16;
       totalBidParcels = round(rawParcels, 0);
       C19_lance_ofertado_val = totalBidParcels * O16;
@@ -103,41 +160,43 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
       totalBidParcels = qtdParcelasOfertado;
     }
 
-    // Lance Embutido is also % of Credit.
+    // Lance Embutido
     const L21 = ifError(() => (credito * percentualEmbutidoDecimal) / O16, 0);
     const D20_qtd_parcelas_embutido = round(L21, 0);
     const C20_lance_embutido_val = D20_qtd_parcelas_embutido * O16;
 
-    // Parcelas em Dinheiro (Cash)
-    // Se o input foi %, totalBidParcels já inclui tudo. Se foi manual, qtdParcelasOfertado é o total.
-    // O lance embutido é sempre uma parte do total.
-    const cashParcels = totalBidParcels - D20_qtd_parcelas_embutido;
+    // Lance FGTS
+    let C_FGTS_val = 0;
+    let D_FGTS_qtd = 0;
+    if (lanceComFgts) {
+      const fgtsDecimal = (Number(percentualFgts) || 0) / 100;
+      const rawFgtsParcels = (credito * fgtsDecimal) / O16;
+      D_FGTS_qtd = round(rawFgtsParcels, 0);
+      C_FGTS_val = D_FGTS_qtd * O16;
+    }
+
+    // Parcelas em Dinheiro (Cash) = Total - Embutido - FGTS
+    // Note: If Total Bid was entered as %, it includes everything.
+    // If the user meant "Total = Cash + Embutido + FGTS", then Cash is the remainder.
+    const cashParcels = totalBidParcels - D20_qtd_parcelas_embutido - D_FGTS_qtd;
 
     const B30_creditoDisponivel = credito - C20_lance_embutido_val;
 
-    // Flags de Diluir Lance (1 ou 0)
-    // 1: Diluir (Reduz valor da parcela)
-    // 3: Abater (Reduz prazo)
-
     let parcelasAbatidas = 0;
     if (diluirLance === 1) {
-      // Opção 1: Sim (Abater Prazo) -> Reduz Prazo
       parcelasAbatidas = totalBidParcels;
     } else if (diluirLance === 3) {
-      // Opção 3: Não (abater parcelas) -> Mantém Prazo (Diluir) -> Reduz Valor
       parcelasAbatidas = 0;
     } else if (diluirLance === 2) {
-      // LUDC
       parcelasAbatidas = 0;
     }
 
-    // B28: Parcelas Pagas
     const B28_qtd_parcelas_pagas = 1 + parcelasAbatidas + (lanceNaAssembleia - 1);
     const B29_parcelasAPagarQtd = qtdMeses - B28_qtd_parcelas_pagas;
 
     // L27: Valor Amortizado (em parcelas)
-    // Deve considerar o TOTAL ofertado (Cash + Embutido) para abater do saldo
-    const L27 = ((cashParcels + D20_qtd_parcelas_embutido) * O15) + O12;
+    // Considera TOTAL ofertado (Cash + Embutido + FGTS)
+    const L27 = ((cashParcels + D20_qtd_parcelas_embutido + D_FGTS_qtd) * O15) + O12;
 
     const L28 = N13 - L27;
     const B27_saldoDevedor = L28 * credito;
@@ -145,15 +204,14 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const L29 = ifError(() => round(L28 / B29_parcelasAPagarQtd, 6), 0);
 
     // Seguros Pós-Contemplação
-    // Automóvel: Continua pagando Vida (L16)
-    // Imóvel: Passa a pagar Quebra de Garantia (L17)
-    const M27_seguro_vida_pos = (L16_CONST * B27_saldoDevedor) * (isAutomovel ? 1 : 0);
-    const M28_seguro_garantia_pos = (L17_CONST * B27_saldoDevedor) * (isImovel ? 1 : 0); // Imóvel paga L17 aqui
+    const M27_seguro_vida_pos = (L16_CONST * B27_saldoDevedor) * (tipoSeguro === 'Automóvel' ? 1 : 0);
+    const M28_seguro_garantia_pos = (L17_CONST * B27_saldoDevedor) * (tipoSeguro === 'Imóvel' ? 1 : 0);
 
     const C29_parcelasAPagarValor = ifError(() => (L29 * credito) + M27_seguro_vida_pos + M28_seguro_garantia_pos, 0);
 
     return {
-      valorParcela: C10_valorParcela,
+      valorParcela: valorParcelaInicial,
+      valorDemaisParcelas: valorDemaisParcelas,
       creditoDisponivel: B30_creditoDisponivel,
       saldoDevedor: B27_saldoDevedor,
       parcelasAPagarQtd: B29_parcelasAPagarQtd,
