@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Select from '../components/Select';
-import Toggle from '../components/Toggle';
+import SegmentedControl from '../components/SegmentedControl';
 import ResultDisplay from '../components/ResultDisplay';
 import { calculateSimulation } from '../services/simulationService';
 import { sendProposalWebhook } from '../services/webhookService';
@@ -23,6 +23,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     return { ...initialInputs, consultorNome: user!.profile.name || '' };
   });
 
+  const [bidMode, setBidMode] = useState<'percent' | 'value'>('percent');
   const [outputs, setOutputs] = useState<SimulationOutputs | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof SimulationInputs, string>>>({});
   const [resultTitle, setResultTitle] = useState('Resultados da Simulação');
@@ -63,21 +64,33 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     }
   };
 
-  const handleToggleChange = (name: string, checked: boolean) => {
-    // Logic for Insurance Toggle: Checked = Active (Auto/Imovel based on context), Unchecked = No Insurance (3)
-    // For simplicity, if checked, we default to 2 (Imóvel) or 1 (Auto) based on tipoBem.
-    // If unchecked, 3 (Sem Seguro).
-    let value: number;
-    if (name === 'seguroPrestamista') {
-      if (!checked) {
-        value = 3; // Sem Seguro
-      } else {
-        value = inputs.tipoBem === 'Automóvel' ? 1 : 2; // Default to standard insurance
-      }
+  // Special handler for Bid inputs to handle R$/% conversion
+  const handleBidChange = (name: string, value: string | number) => {
+    const numericValue = Number(value);
+    const credito = Number(inputs.credito) || 0;
+
+    if (bidMode === 'percent') {
+      // If in percent mode, value is already %, just update inputs
+      handleInputChange(name, value);
     } else {
-      value = checked ? 1 : 0; // Generic toggle
+      // If in value mode, convert R$ to % before updating inputs
+      // Formula: (Value / Credito) * 100
+      if (credito > 0) {
+        const percent = (numericValue / credito) * 100;
+        handleInputChange(name, percent); // Store as percent
+      } else {
+        // If no credit, we can't calculate %, so maybe just store 0 or keep it? 
+        // Ideally we should warn user to set credit first.
+        handleInputChange(name, 0);
+      }
     }
-    handleInputChange(name, value);
+  };
+
+  const getBidDisplayValue = (percentValue: number | '') => {
+    if (bidMode === 'percent') return percentValue;
+    const credito = Number(inputs.credito) || 0;
+    const percent = Number(percentValue) || 0;
+    return (percent / 100) * credito;
   };
 
   const handleClearFields = () => {
@@ -203,6 +216,13 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     return tempOutputs ? tempOutputs.percentualParcela : 0;
   }, [inputs]);
 
+  // Calculate Lance Livre (Pago) for display
+  const lanceLivreCalculado = useMemo(() => {
+    const ofertado = Number(inputs.percentualOfertado) || 0;
+    const embutido = Number(inputs.percentualEmbutido) || 0;
+    return Math.max(0, ofertado - embutido);
+  }, [inputs.percentualOfertado, inputs.percentualEmbutido]);
+
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
@@ -224,7 +244,14 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
               <Select label="Tipo de Bem" name="tipoBem" value={inputs.tipoBem} onChange={handleInputChange} options={[{ value: 'Imóvel', label: 'Imóvel' }, { value: 'Automóvel', label: 'Automóvel' }]} tooltip="Tipo do consórcio." />
               <Select label="Redutor de Parcela" name="planoLight" value={inputs.planoLight} onChange={handleInputChange} options={[{ value: 1, label: 'Integral (Sem redução)' }, { value: 2, label: '10% de Redução' }, { value: 3, label: '20% de Redução' }, { value: 4, label: '30% de Redução' }, { value: 5, label: '40% de Redução' }, { value: 6, label: '50% de Redução' }]} tooltip="Opção de parcela reduzida." />
 
-              <Toggle label="Seguro Prestamista" checked={inputs.seguroPrestamista !== 3} onChange={(checked) => handleToggleChange('seguroPrestamista', checked)} tooltip="Ativar seguro prestamista." />
+              <SegmentedControl
+                label="Seguro Prestamista"
+                name="seguroPrestamista"
+                value={inputs.seguroPrestamista}
+                onChange={(val) => handleInputChange('seguroPrestamista', val)}
+                options={[{ value: 1, label: 'Automóvel' }, { value: 2, label: 'Imóvel' }, { value: 3, label: 'Sem Seguro' }]}
+                tooltip="Tipo de seguro a ser aplicado."
+              />
 
               <Input label="% da Parcela" name="percentualParcela" value={`${(percentualParcelaCalculado * 100).toFixed(4)}%`.replace('.', ',')} onChange={() => { }} readOnly tooltip="Cálculo automático do percentual mensal do crédito." />
 
@@ -238,13 +265,50 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
           {/* SECTION 2: CONTEMPLAÇÃO */}
           <Card title="CONTEMPLAÇÃO" className="mb-8 border-l-4 border-orange-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2 flex justify-end">
+                <div className="w-48">
+                  <SegmentedControl
+                    value={bidMode}
+                    onChange={(val) => setBidMode(val as 'percent' | 'value')}
+                    options={[{ value: 'percent', label: '%' }, { value: 'value', label: 'R$' }]}
+                  />
+                </div>
+              </div>
+
               <Select label="Tipo de Lance" name="diluirLance" value={inputs.diluirLance} onChange={handleInputChange} options={[{ value: 1, label: 'Sim (Abater Prazo)' }, { value: 2, label: 'LUDC' }, { value: 3, label: 'Não (abater parcelas)' }]} tooltip="Como o lance será utilizado." />
               <Input label="Mês da Contemplação" name="lanceNaAssembleia" type="number" min="1" value={inputs.lanceNaAssembleia} onChange={handleInputChange} tooltip="Previsão de contemplação." />
 
-              <Input label="Lance Livre (%)" name="percentualOfertado" type="number" step="0.1" value={inputs.percentualOfertado} onChange={handleInputChange} tooltip="Lance total ofertado." />
-              <Input label="Lance Embutido (%)" name="percentualEmbutido" type="number" step="0.1" value={inputs.percentualEmbutido} onChange={handleInputChange} tooltip="Parte do lance descontada do crédito." error={errors.percentualEmbutido} />
+              <Input
+                label={`Lance Ofertado (${bidMode === 'percent' ? '%' : 'R$'})`}
+                name="percentualOfertado"
+                type={bidMode === 'percent' ? 'number' : 'text'}
+                step="0.1"
+                value={getBidDisplayValue(inputs.percentualOfertado)}
+                onChange={handleBidChange}
+                mask={bidMode === 'value' ? 'currency' : undefined}
+                tooltip="Lance total ofertado."
+              />
 
-              <Input label="Lance Pago (%)" name="lancePago" value={Math.max(0, (Number(inputs.percentualOfertado) || 0) - (Number(inputs.percentualEmbutido) || 0)).toFixed(2)} onChange={() => { }} readOnly tooltip="Calculado automaticamente: Lance Ofertado - Lance Embutido." />
+              <Input
+                label={`Lance Embutido (${bidMode === 'percent' ? '%' : 'R$'})`}
+                name="percentualEmbutido"
+                type={bidMode === 'percent' ? 'number' : 'text'}
+                step="0.1"
+                value={getBidDisplayValue(inputs.percentualEmbutido)}
+                onChange={handleBidChange}
+                mask={bidMode === 'value' ? 'currency' : undefined}
+                tooltip="Parte do lance descontada do crédito."
+                error={errors.percentualEmbutido}
+              />
+
+              <Input
+                label={`Lance Livre (${bidMode === 'percent' ? '%' : 'R$'})`}
+                name="lancePago"
+                value={bidMode === 'percent' ? `${lanceLivreCalculado.toFixed(2)}%` : formatCurrency((lanceLivreCalculado / 100) * (Number(inputs.credito) || 0))}
+                onChange={() => { }}
+                readOnly
+                tooltip="Calculado automaticamente: Lance Ofertado - Lance Embutido."
+              />
 
               <div className="md:col-span-2 grid grid-cols-2 gap-4 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
                 <div>
