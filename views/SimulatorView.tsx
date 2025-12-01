@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Select from '../components/Select';
+import Toggle from '../components/Toggle';
 import ResultDisplay from '../components/ResultDisplay';
 import { calculateSimulation } from '../services/simulationService';
 import { sendProposalWebhook } from '../services/webhookService';
@@ -19,7 +20,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const [inputs, setInputs] = useState<SimulationInputs>(() => {
-    // A estrutura do App garante que 'user' exista aqui.
     return { ...initialInputs, consultorNome: user!.profile.name || '' };
   });
 
@@ -45,7 +45,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
       }
       onSimulationLoaded();
 
-      // Scroll to results when loading from history
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
@@ -55,7 +54,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   const handleInputChange = (name: string, value: string | number) => {
     setInputs(prev => ({ ...prev, [name]: value }));
     setWebhookMessage(null);
-    // Clear error for the current field when user starts typing
     if (errors[name as keyof SimulationInputs]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -63,6 +61,23 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
         return newErrors;
       });
     }
+  };
+
+  const handleToggleChange = (name: string, checked: boolean) => {
+    // Logic for Insurance Toggle: Checked = Active (Auto/Imovel based on context), Unchecked = No Insurance (3)
+    // For simplicity, if checked, we default to 2 (Imóvel) or 1 (Auto) based on tipoBem.
+    // If unchecked, 3 (Sem Seguro).
+    let value: number;
+    if (name === 'seguroPrestamista') {
+      if (!checked) {
+        value = 3; // Sem Seguro
+      } else {
+        value = inputs.tipoBem === 'Automóvel' ? 1 : 2; // Default to standard insurance
+      }
+    } else {
+      value = checked ? 1 : 0; // Generic toggle
+    }
+    handleInputChange(name, value);
   };
 
   const handleClearFields = () => {
@@ -92,17 +107,15 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     const validationErrors = validateInputs();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      setOutputs(null); // Clear previous results
+      setOutputs(null);
       return;
     }
-    setErrors({}); // Clear any existing errors
+    setErrors({});
     const results = calculateSimulation(inputs);
     setOutputs(results);
     if (results && user) {
       setResultTitle(`Resultados para ${inputs.clienteNome || 'Cliente'}`);
       addToHistory(user.uid, inputs);
-
-      // Smart scroll to results (works for both mobile/stacked and desktop/side-by-side)
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
@@ -115,7 +128,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   const handleSendProposal = async () => {
     if (!outputs || !user) return;
 
-    // Re-validate before sending
     const validationErrors = validateInputs();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -128,14 +140,13 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     setProgressMessage('');
 
     try {
-      // Step 1: Solicitação recebida
       setProgressMessage('✓ Solicitação recebida...');
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Garante que os valores numéricos sejam números para o payload
       const credito = Number(inputs.credito) || 0;
       const qtdMeses = Number(inputs.qtdMeses) || 0;
       const taxa = Number(inputs.taxa) || 0;
+      const fundoReserva = Number(inputs.fundoReserva) || 0;
       const percentualOfertado = Number(inputs.percentualOfertado) || 0;
       const percentualEmbutido = Number(inputs.percentualEmbutido) || 0;
 
@@ -153,7 +164,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
         praPos: outputs.parcelasAPagarQtd,
         vParcaPag: formatCurrency(outputs.parcelasAPagarValor),
         vParcNorm: formatCurrency(outputs.valorParcela),
-        taxaAdm: `${taxa}%`.replace('.', ','),
+        taxaAdm: `${taxa + fundoReserva}%`.replace('.', ','), // Summing Fundo Reserva to Taxa for display? Or keep separate?
         percLanceOf: formatPercent(percentualOfertado / 100),
         vLanceOf: formatCurrency(lanceOfertadoValor),
         percLanceEmb: formatPercent(percentualEmbutido / 100),
@@ -165,17 +176,13 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
         tipoBem: inputs.tipoBem,
       };
 
-      // Step 2: Enviando para formatação
       setProgressMessage('✓ Solicitação recebida\n⏳ Enviando para formatação...');
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Step 3: Construindo PDF
       setProgressMessage('✓ Solicitação recebida\n✓ Enviando para formatação\n⏳ Construindo PDF...');
 
-      // Send webhook
       const response = await sendProposalWebhook(payload);
 
-      // Step 4: Enviando para WhatsApp
       if (response.success) {
         setProgressMessage('✓ Solicitação recebida\n✓ Enviando para formatação\n✓ Construindo PDF\n⏳ Enviando para o WhatsApp...');
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -187,7 +194,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
       setWebhookMessage({ type: 'error', text: 'Erro ao gerar proposta. Tente novamente.' });
     } finally {
       setIsSubmitting(false);
-      setTimeout(() => setProgressMessage(''), 2000); // Clear progress after 2 seconds
+      setTimeout(() => setProgressMessage(''), 2000);
     }
   };
 
@@ -201,34 +208,50 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     <div className="flex flex-col lg:flex-row gap-8">
       <div className="lg:w-3/5">
         <form onSubmit={handleSimulate}>
-          <Card title="Dados da Proposta" className="mb-8">
+
+          {/* SECTION 1: PROPOSTA */}
+          <Card title="PROPOSTA" className="mb-8 border-l-4 border-blue-600">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
-                <Input label="Nome do Cliente" name="clienteNome" value={inputs.clienteNome} onChange={handleInputChange} tooltip="Nome completo do cliente para identificação na proposta." error={errors.clienteNome} />
+                <Input label="Nome do Cliente" name="clienteNome" value={inputs.clienteNome} onChange={handleInputChange} tooltip="Nome completo do cliente." error={errors.clienteNome} />
               </div>
-              <Input label="Nome do Consultor" name="consultorNome" value={inputs.consultorNome} onChange={handleInputChange} tooltip="Seu nome, preenchido automaticamente a partir do seu perfil. Você pode editar este campo se necessário." error={errors.consultorNome} />
-              <Select label="Tipo de Bem" name="tipoBem" value={inputs.tipoBem} onChange={handleInputChange} options={[{ value: 'Imóvel', label: 'Imóvel' }, { value: 'Automóvel', label: 'Automóvel' }]} tooltip="Define o tipo de consórcio. Imóveis geralmente têm prazos mais longos." />
+              <Input label="Crédito Contratado (R$)" name="credito" value={inputs.credito} onChange={handleInputChange} mask="currency" tooltip="Valor do crédito." error={errors.credito} />
+              <Input label="Prazo (meses)" name="qtdMeses" type="number" min="1" value={inputs.qtdMeses} onChange={handleInputChange} tooltip="Prazo total." error={errors.qtdMeses} />
+
+              <Input label="Taxa de Administração (%)" name="taxa" type="number" step="0.1" value={inputs.taxa} onChange={handleInputChange} tooltip="Taxa administrativa total." error={errors.taxa} />
+              <Input label="Fundo de Reserva (%)" name="fundoReserva" type="number" step="0.1" value={inputs.fundoReserva} onChange={handleInputChange} tooltip="Fundo de reserva total." />
+
+              <Select label="Tipo de Bem" name="tipoBem" value={inputs.tipoBem} onChange={handleInputChange} options={[{ value: 'Imóvel', label: 'Imóvel' }, { value: 'Automóvel', label: 'Automóvel' }]} tooltip="Tipo do consórcio." />
+              <Select label="Redutor de Parcela" name="planoLight" value={inputs.planoLight} onChange={handleInputChange} options={[{ value: 1, label: 'Integral (Sem redução)' }, { value: 2, label: '10% de Redução' }, { value: 3, label: '20% de Redução' }, { value: 4, label: '30% de Redução' }, { value: 5, label: '40% de Redução' }, { value: 6, label: '50% de Redução' }]} tooltip="Opção de parcela reduzida." />
+
+              <Toggle label="Seguro Prestamista" checked={inputs.seguroPrestamista !== 3} onChange={(checked) => handleToggleChange('seguroPrestamista', checked)} tooltip="Ativar seguro prestamista." />
+
+              <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center">
+                <span className="font-semibold text-blue-800 dark:text-blue-200">Parcela Inicial Estimada:</span>
+                <span className="font-bold text-xl text-blue-600 dark:text-blue-400">{outputs ? formatCurrency(outputs.valorParcela) : 'R$ 0,00'}</span>
+              </div>
             </div>
           </Card>
 
-          <Card title="Parâmetros do Crédito" className="mb-8">
+          {/* SECTION 2: CONTEMPLAÇÃO */}
+          <Card title="CONTEMPLAÇÃO" className="mb-8 border-l-4 border-orange-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input label="Valor do Crédito (R$)" name="credito" value={inputs.credito} onChange={handleInputChange} mask="currency" tooltip="O valor total que o cliente deseja contratar." error={errors.credito} />
-              <Input label="Prazo (meses)" name="qtdMeses" type="number" min="1" value={inputs.qtdMeses} onChange={handleInputChange} tooltip="O número total de meses para o pagamento do consórcio." error={errors.qtdMeses} />
-              <Input label="Taxa Adm. (%)" name="taxa" type="number" step="0.1" value={inputs.taxa} onChange={handleInputChange} tooltip="Percentual total de administração cobrado sobre o valor do crédito durante o prazo." error={errors.taxa} />
-              <Select label="Plano Redução" name="planoLight" value={inputs.planoLight} onChange={handleInputChange} options={[{ value: 1, label: 'Integral (Sem redução)' }, { value: 2, label: '10% de Redução' }, { value: 3, label: '20% de Redução' }, { value: 4, label: '30% de Redução' }, { value: 5, label: '40% de Redução' }, { value: 6, label: '50% de Redução' }]} tooltip="Permite iniciar pagando um percentual menor da parcela, com a diferença sendo paga após a contemplação ou no final do plano." />
-              <Select label="Seguro Prestamista" name="seguroPrestamista" value={inputs.seguroPrestamista} onChange={handleInputChange} options={[{ value: 1, label: 'Automóvel' }, { value: 2, label: 'Imóvel' }, { value: 3, label: 'Sem Seguro' }]} tooltip="Garante a quitação do saldo devedor em caso de imprevistos. O seguro Automóvel possui taxa específica." />
-              <Input label="% da Parcela" name="percentualParcela" value={`${(percentualParcelaCalculado * 100).toFixed(4)}%`.replace('.', ',')} onChange={() => { }} readOnly tooltip="Cálculo automático do percentual mensal do crédito, considerando a taxa administrativa." />
-            </div>
-          </Card>
+              <Select label="Tipo de Lance" name="diluirLance" value={inputs.diluirLance} onChange={handleInputChange} options={[{ value: 1, label: 'Sim (Abater Prazo)' }, { value: 2, label: 'LUDC' }, { value: 3, label: 'Não (abater parcelas)' }]} tooltip="Como o lance será utilizado." />
+              <Input label="Mês da Contemplação" name="lanceNaAssembleia" type="number" min="1" value={inputs.lanceNaAssembleia} onChange={handleInputChange} tooltip="Previsão de contemplação." />
 
-          <Card title="Configuração do Lance" className="mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input label="Lance Ofertado (%)" name="percentualOfertado" type="number" step="0.1" value={inputs.percentualOfertado} onChange={handleInputChange} tooltip="Percentual do crédito que o cliente ofertará como lance. Pode incluir o lance embutido." />
-              <Input label="Lance Embutido (%)" name="percentualEmbutido" type="number" step="0.1" value={inputs.percentualEmbutido} onChange={handleInputChange} tooltip="Parte do lance que será descontada do próprio crédito, diminuindo o valor que o cliente recebe." error={errors.percentualEmbutido} />
-              <Input label="Lance Pago (%)" name="lancePago" value={Math.max(0, (Number(inputs.percentualOfertado) || 0) - (Number(inputs.percentualEmbutido) || 0)).toFixed(2)} onChange={() => { }} readOnly tooltip="Calculado automaticamente: Lance Ofertado - Lance Embutido." />
-              <Select label="Forma de Abatimento do Lance" name="diluirLance" value={inputs.diluirLance} onChange={handleInputChange} options={[{ value: 1, label: 'Sim (Abater Prazo)' }, { value: 2, label: 'LUDC' }, { value: 3, label: 'Não (abater parcelas)' }]} tooltip="Define se o lance será usado para reduzir o prazo (Sim) ou reduzir o valor da parcela (Não)." />
-              <Input label="Mês do Lance (Assembleia)" name="lanceNaAssembleia" type="number" min="1" value={inputs.lanceNaAssembleia} onChange={handleInputChange} tooltip="O número da assembleia em que o cliente pretende dar o lance para ser contemplado." />
+              <Input label="Lance Livre (%)" name="percentualOfertado" type="number" step="0.1" value={inputs.percentualOfertado} onChange={handleInputChange} tooltip="Lance total ofertado." />
+              <Input label="Lance Embutido (%)" name="percentualEmbutido" type="number" step="0.1" value={inputs.percentualEmbutido} onChange={handleInputChange} tooltip="Parte do lance descontada do crédito." error={errors.percentualEmbutido} />
+
+              <div className="md:col-span-2 grid grid-cols-2 gap-4 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+                <div>
+                  <span className="block text-sm text-orange-800 dark:text-orange-200">Lance Rec. Próprios</span>
+                  <span className="font-bold text-lg text-orange-600 dark:text-orange-400">{outputs ? formatCurrency(outputs.lanceOfertadoValor - outputs.lanceEmbutidoValor) : 'R$ 0,00'}</span>
+                </div>
+                <div>
+                  <span className="block text-sm text-orange-800 dark:text-orange-200">Lance Embutido</span>
+                  <span className="font-bold text-lg text-orange-600 dark:text-orange-400">{outputs ? formatCurrency(outputs.lanceEmbutidoValor) : 'R$ 0,00'}</span>
+                </div>
+              </div>
             </div>
           </Card>
 
@@ -246,21 +269,28 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
           {outputs ? (
             <div className="space-y-4 animate-slideUp" key={JSON.stringify(outputs)}>
               <div>
-                <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400">Cenário Inicial</h3>
+                <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400">Resumo da Operação</h3>
                 <ResultDisplay label="Crédito Contratado" value={formatCurrency(Number(inputs.credito) || 0)} />
-                <ResultDisplay label="Parcela Inicial" value={formatCurrency(outputs.valorParcela)} />
+                <ResultDisplay label="Prazo Total" value={`${inputs.qtdMeses} meses`} />
+                <ResultDisplay label="Taxa Total" value={`${Number(inputs.taxa) + (Number(inputs.fundoReserva) || 0)}%`} />
               </div>
 
               <div>
                 <h3 className="font-bold text-lg mb-2 text-orange-500 dark:text-orange-400">Pós Contemplação</h3>
-                <ResultDisplay label="Lance Ofertado" value={formatCurrency(outputs.lanceOfertadoValor)} />
-                <ResultDisplay label="Lance Embutido" value={formatCurrency(outputs.lanceEmbutidoValor)} />
-                <ResultDisplay label="Lance Pago (Rec. Próprios)" value={formatCurrency(outputs.lanceOfertadoValor - outputs.lanceEmbutidoValor)} />
-                <ResultDisplay label="Qtd. Parcelas à Pagar" value={outputs.parcelasAPagarQtd} />
-                <ResultDisplay label="Valor da Nova Parcela" value={formatCurrency(outputs.parcelasAPagarValor)} />
-                <ResultDisplay label="Parcelas Pagas" value={outputs.parcContem} />
+                <ResultDisplay label="Lance Total" value={formatCurrency(outputs.lanceOfertadoValor)} />
                 <ResultDisplay label="Saldo Devedor" value={formatCurrency(outputs.saldoDevedor)} />
                 <ResultDisplay label="Crédito Disponível" value={formatCurrency(outputs.creditoDisponivel)} className="text-green-600 dark:text-green-400 font-bold text-xl mt-2" />
+
+                <div className="mt-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Nova Parcela:</span>
+                    <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(outputs.parcelasAPagarValor)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Prazo Restante:</span>
+                    <span className="text-lg font-bold text-slate-700 dark:text-slate-300">{outputs.parcelasAPagarQtd} meses</span>
+                  </div>
+                </div>
               </div>
 
               <div className="pt-6">

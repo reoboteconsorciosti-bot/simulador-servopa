@@ -27,6 +27,7 @@ export interface SimulationInputs {
   credito: number | '';
   qtdMeses: number | '';
   taxa: number | '';
+  fundoReserva: number | '';
   planoLight: number;
   seguroPrestamista: number;
   percentualOfertado: number | '';
@@ -55,6 +56,7 @@ export const initialInputs: SimulationInputs = {
   credito: '',
   qtdMeses: '',
   taxa: '',
+  fundoReserva: '',
   planoLight: 1,
   seguroPrestamista: 1,
   percentualOfertado: '',
