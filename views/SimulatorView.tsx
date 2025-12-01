@@ -65,6 +65,12 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     }
   };
 
+  const handleLanceLivreChange = (name: string, value: number) => {
+    const embutido = Number(inputs.percentualEmbutido) || 0;
+    const novoOfertado = value + embutido;
+    setInputs(prev => ({ ...prev, percentualOfertado: novoOfertado }));
+  };
+
   const handleClearFields = () => {
     if (!user) return;
     setInputs({ ...initialInputs, consultorNome: user.profile.name || '' });
@@ -261,9 +267,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 label="Lance Livre (Pago)"
                 name="lancePago"
                 value={lanceLivreCalculado}
-                onChange={() => { }}
+                onChange={handleLanceLivreChange}
                 credit={Number(inputs.credito) || 0}
-                readOnly
               />
 
               <div className="md:col-span-2 grid grid-cols-2 gap-4 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
