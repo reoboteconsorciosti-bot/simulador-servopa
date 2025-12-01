@@ -173,8 +173,8 @@ const MainApp: React.FC = () => {
                     backgroundImage: 'url(/favicon_new.jpg)',
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'center',
-                    backgroundSize: '500px',
-                    opacity: 0.03,
+                    backgroundSize: '800px',
+                    opacity: 0.05,
                     filter: 'grayscale(100%)'
                 }}
             />
