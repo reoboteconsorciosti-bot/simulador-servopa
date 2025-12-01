@@ -33,7 +33,12 @@ const CurrencyPercentInput: React.FC<CurrencyPercentInputProps> = ({
             setLocalValue(currencyVal.toFixed(2));
         } else {
             // Keep as %
-            setLocalValue(numericValue.toString());
+            // Limit to 3 decimal places for display if it's not currently being edited (approx check)
+            // To avoid cursor jumping, we only force update if the value is numerically different
+            // or if we want to enforce the 3 decimal limit on external updates.
+            // We use parseFloat(toFixed(3)) to remove trailing zeros (e.g. 10.000 -> 10)
+            const formatted = parseFloat(numericValue.toFixed(3)).toString();
+            setLocalValue(formatted);
         }
     }, [value, isCurrency, credit]);
 
@@ -78,10 +83,20 @@ const CurrencyPercentInput: React.FC<CurrencyPercentInputProps> = ({
                         } else {
                             onChange(name, 0);
                         }
+                        setLocalValue(String(v));
                     } else {
-                        onChange(name, numVal);
+                        // Limit to 3 decimal places
+                        const parts = String(v).split('.');
+                        if (parts[1] && parts[1].length > 3) {
+                            // Truncate extra decimals
+                            const truncated = Math.floor(numVal * 1000) / 1000;
+                            onChange(name, truncated);
+                            setLocalValue(String(truncated));
+                        } else {
+                            onChange(name, numVal);
+                            setLocalValue(String(v));
+                        }
                     }
-                    setLocalValue(String(v));
                 }}
                 mask={isCurrency ? 'currency' : undefined}
                 type={isCurrency ? 'text' : 'number'}
