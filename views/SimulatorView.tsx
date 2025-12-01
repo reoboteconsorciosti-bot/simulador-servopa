@@ -112,9 +112,9 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     setWebhookMessage(null);
   };
 
-  const validateInputs = (): Partial<Record<keyof SimulationInputs, string>> => {
+  const validateInputs = (requireName: boolean = true): Partial<Record<keyof SimulationInputs, string>> => {
     const newErrors: Partial<Record<keyof SimulationInputs, string>> = {};
-    if (!inputs.clienteNome.trim()) newErrors.clienteNome = 'O nome do cliente é obrigatório.';
+    if (requireName && !inputs.clienteNome.trim()) newErrors.clienteNome = 'O nome do cliente é obrigatório para gerar a proposta.';
     if (!inputs.consultorNome.trim()) newErrors.consultorNome = 'O nome do consultor é obrigatório.';
     if (inputs.credito === '' || Number(inputs.credito) <= 0) newErrors.credito = 'O valor do crédito deve ser maior que zero.';
     if (inputs.qtdMeses === '' || Number(inputs.qtdMeses) <= 0) newErrors.qtdMeses = 'O prazo deve ser maior que zero.';
@@ -127,7 +127,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
 
   const handleSimulate = (e: React.FormEvent) => {
     e.preventDefault();
-    const validationErrors = validateInputs();
+    const validationErrors = validateInputs(false); // Name not required for simulation
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setOutputs(null);
@@ -137,7 +137,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     const results = calculateSimulation(inputs);
     setOutputs(results);
     if (results && user) {
-      setResultTitle(`Resultados para ${inputs.clienteNome || 'Cliente'} `);
+      setResultTitle(inputs.clienteNome.trim() ? `Resultados para ${inputs.clienteNome}` : 'Resultados da Simulação');
       addToHistory(user.uid, inputs);
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -151,7 +151,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   const handleSendProposal = async () => {
     if (!outputs || !user) return;
 
-    const validationErrors = validateInputs();
+    const validationErrors = validateInputs(true); // Name REQUIRED for proposal
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setWebhookMessage({ type: 'error', text: 'Preencha todos os campos obrigatórios antes de gerar a proposta.' });
