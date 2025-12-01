@@ -226,6 +226,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
 
               <Toggle label="Seguro Prestamista" checked={inputs.seguroPrestamista !== 3} onChange={(checked) => handleToggleChange('seguroPrestamista', checked)} tooltip="Ativar seguro prestamista." />
 
+              <Input label="% da Parcela" name="percentualParcela" value={`${(percentualParcelaCalculado * 100).toFixed(4)}%`.replace('.', ',')} onChange={() => { }} readOnly tooltip="Cálculo automático do percentual mensal do crédito." />
+
               <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center">
                 <span className="font-semibold text-blue-800 dark:text-blue-200">Parcela Inicial Estimada:</span>
                 <span className="font-bold text-xl text-blue-600 dark:text-blue-400">{outputs ? formatCurrency(outputs.valorParcela) : 'R$ 0,00'}</span>
@@ -241,6 +243,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
 
               <Input label="Lance Livre (%)" name="percentualOfertado" type="number" step="0.1" value={inputs.percentualOfertado} onChange={handleInputChange} tooltip="Lance total ofertado." />
               <Input label="Lance Embutido (%)" name="percentualEmbutido" type="number" step="0.1" value={inputs.percentualEmbutido} onChange={handleInputChange} tooltip="Parte do lance descontada do crédito." error={errors.percentualEmbutido} />
+
+              <Input label="Lance Pago (%)" name="lancePago" value={Math.max(0, (Number(inputs.percentualOfertado) || 0) - (Number(inputs.percentualEmbutido) || 0)).toFixed(2)} onChange={() => { }} readOnly tooltip="Calculado automaticamente: Lance Ofertado - Lance Embutido." />
 
               <div className="md:col-span-2 grid grid-cols-2 gap-4 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
                 <div>

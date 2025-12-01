@@ -46,6 +46,7 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const qtdParcelasOfertado = Number(inputs.qtdParcelasOfertado) || 0;
     const lanceNaAssembleia = Number(inputs.lanceNaAssembleia) || 0;
     const { planoLight, seguroPrestamista } = inputs;
+    const fundoReserva = Number(inputs.fundoReserva) || 0;
     const diluirLance = Number(inputs.diluirLance);
 
     // Prevent division by zero if prazo is not set
@@ -53,7 +54,7 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
       return null;
     }
 
-    const taxaDecimal = taxa / 100;
+    const taxaDecimal = (taxa + fundoReserva) / 100;
     const percentualOfertadoDecimal = percentualOfertado / 100;
     const percentualEmbutidoDecimal = percentualEmbutido / 100;
     const planoLightFactor = getPlanoLightFactor(planoLight);
