@@ -246,7 +246,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 value={Number(inputs.percentualOfertado) || ''}
                 onChange={handleInputChange}
                 credit={Number(inputs.credito) || 0}
-                tooltip="Lance total ofertado."
               />
 
               <CurrencyPercentInput
@@ -255,7 +254,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 value={Number(inputs.percentualEmbutido) || ''}
                 onChange={handleInputChange}
                 credit={Number(inputs.credito) || 0}
-                tooltip="Parte do lance descontada do crédito."
                 error={errors.percentualEmbutido}
               />
 
@@ -266,7 +264,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 onChange={() => { }}
                 credit={Number(inputs.credito) || 0}
                 readOnly
-                tooltip="Calculado automaticamente: Lance Ofertado - Lance Embutido."
               />
 
               <div className="md:col-span-2 grid grid-cols-2 gap-4 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
