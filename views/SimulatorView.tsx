@@ -1,4 +1,3 @@
-```
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Card from '../components/Card';
 import Input from '../components/Input';
@@ -42,7 +41,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
       const results = calculateSimulation(inputsToLoad);
       setOutputs(results);
       if (results) {
-        setResultTitle(`Resultados para ${ inputsToLoad.clienteNome || 'Cliente' } `);
+        setResultTitle(`Resultados para ${inputsToLoad.clienteNome || 'Cliente'} `);
       } else {
         setResultTitle('Resultados da Simulação');
       }
@@ -100,7 +99,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     const results = calculateSimulation(inputs);
     setOutputs(results);
     if (results && user) {
-      setResultTitle(`Resultados para ${ inputs.clienteNome || 'Cliente' } `);
+      setResultTitle(`Resultados para ${inputs.clienteNome || 'Cliente'} `);
       addToHistory(user.uid, inputs);
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -109,7 +108,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   };
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  const formatPercent = (value: number) => `${ (value * 100).toFixed(2) }% `.replace('.', ',');
+  const formatPercent = (value: number) => `${(value * 100).toFixed(2)}% `.replace('.', ',');
 
   const handleSendProposal = async () => {
     if (!outputs || !user) return;
@@ -150,7 +149,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
         praPos: outputs.parcelasAPagarQtd,
         vParcaPag: formatCurrency(outputs.parcelasAPagarValor),
         vParcNorm: formatCurrency(outputs.valorParcela),
-        taxaAdm: `${ taxa + fundoReserva }% `.replace('.', ','), // Summing Fundo Reserva to Taxa for display? Or keep separate?
+        taxaAdm: `${taxa + fundoReserva}% `.replace('.', ','), // Summing Fundo Reserva to Taxa for display? Or keep separate?
         percLanceOf: formatPercent(percentualOfertado / 100),
         vLanceOf: formatCurrency(lanceOfertadoValor),
         percLanceEmb: formatPercent(percentualEmbutido / 100),
@@ -226,7 +225,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 tooltip="Tipo de seguro a ser aplicado."
               />
 
-              <Input label="% da Parcela" name="percentualParcela" value={`${ (percentualParcelaCalculado * 100).toFixed(4) }% `.replace('.', ',')} onChange={() => { }} readOnly tooltip="Cálculo automático do percentual mensal do crédito." />
+              <Input label="% da Parcela" name="percentualParcela" value={`${(percentualParcelaCalculado * 100).toFixed(4)}% `.replace('.', ',')} onChange={() => { }} readOnly tooltip="Cálculo automático do percentual mensal do crédito." />
 
               <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center">
                 <span className="font-semibold text-blue-800 dark:text-blue-200">Parcela Inicial Estimada:</span>
@@ -299,8 +298,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
               <div>
                 <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400">Resumo da Operação</h3>
                 <ResultDisplay label="Crédito Contratado" value={formatCurrency(Number(inputs.credito) || 0)} />
-                <ResultDisplay label="Prazo Total" value={`${ inputs.qtdMeses } meses`} />
-                <ResultDisplay label="Taxa Total" value={`${ Number(inputs.taxa) + (Number(inputs.fundoReserva) || 0) }% `} />
+                <ResultDisplay label="Prazo Total" value={`${inputs.qtdMeses} meses`} />
+                <ResultDisplay label="Taxa Total" value={`${Number(inputs.taxa) + (Number(inputs.fundoReserva) || 0)}% `} />
               </div>
 
               <div>
@@ -340,7 +339,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                   </div>
                 )}
                 {webhookMessage && (
-                  <div className={`mt - 4 p - 3 rounded - md text - sm text - center ${ webhookMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200' } `}>
+                  <div className={`mt - 4 p - 3 rounded - md text - sm text - center ${webhookMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200'} `}>
                     {webhookMessage.text}
                   </div>
                 )}
