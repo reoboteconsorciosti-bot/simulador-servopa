@@ -94,7 +94,8 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     let totalBidParcels = 0; // Total de parcelas ofertadas (Cash + Embutido)
 
     if (percentualOfertadoDecimal > 0) {
-      const rawParcels = ((credito * N13) * percentualOfertadoDecimal) / O16;
+      // Lance Ofertado is % of Credit (Carta de Crédito), not Total Debt.
+      const rawParcels = (credito * percentualOfertadoDecimal) / O16;
       totalBidParcels = round(rawParcels, 0);
       C19_lance_ofertado_val = totalBidParcels * O16;
     } else {
@@ -102,7 +103,8 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
       totalBidParcels = qtdParcelasOfertado;
     }
 
-    const L21 = ifError(() => ((credito * N13) * percentualEmbutidoDecimal) / O16, 0);
+    // Lance Embutido is also % of Credit.
+    const L21 = ifError(() => (credito * percentualEmbutidoDecimal) / O16, 0);
     const D20_qtd_parcelas_embutido = round(L21, 0);
     const C20_lance_embutido_val = D20_qtd_parcelas_embutido * O16;
 
