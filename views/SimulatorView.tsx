@@ -1,8 +1,11 @@
+```
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Card from '../components/Card';
 import Input from '../components/Input';
 import Select from '../components/Select';
 import SegmentedControl from '../components/SegmentedControl';
+import Toggle from '../components/Toggle';
+import CurrencyPercentInput from '../components/CurrencyPercentInput';
 import ResultDisplay from '../components/ResultDisplay';
 import { calculateSimulation } from '../services/simulationService';
 import { sendProposalWebhook } from '../services/webhookService';
@@ -23,7 +26,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     return { ...initialInputs, consultorNome: user!.profile.name || '' };
   });
 
-  const [bidMode, setBidMode] = useState<'percent' | 'value'>('percent');
   const [outputs, setOutputs] = useState<SimulationOutputs | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof SimulationInputs, string>>>({});
   const [resultTitle, setResultTitle] = useState('Resultados da Simulação');
@@ -40,7 +42,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
       const results = calculateSimulation(inputsToLoad);
       setOutputs(results);
       if (results) {
-        setResultTitle(`Resultados para ${inputsToLoad.clienteNome || 'Cliente'}`);
+        setResultTitle(`Resultados para ${ inputsToLoad.clienteNome || 'Cliente' } `);
       } else {
         setResultTitle('Resultados da Simulação');
       }
@@ -62,35 +64,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
         return newErrors;
       });
     }
-  };
-
-  // Special handler for Bid inputs to handle R$/% conversion
-  const handleBidChange = (name: string, value: string | number) => {
-    const numericValue = Number(value);
-    const credito = Number(inputs.credito) || 0;
-
-    if (bidMode === 'percent') {
-      // If in percent mode, value is already %, just update inputs
-      handleInputChange(name, value);
-    } else {
-      // If in value mode, convert R$ to % before updating inputs
-      // Formula: (Value / Credito) * 100
-      if (credito > 0) {
-        const percent = (numericValue / credito) * 100;
-        handleInputChange(name, percent); // Store as percent
-      } else {
-        // If no credit, we can't calculate %, so maybe just store 0 or keep it? 
-        // Ideally we should warn user to set credit first.
-        handleInputChange(name, 0);
-      }
-    }
-  };
-
-  const getBidDisplayValue = (percentValue: number | '') => {
-    if (bidMode === 'percent') return percentValue;
-    const credito = Number(inputs.credito) || 0;
-    const percent = Number(percentValue) || 0;
-    return (percent / 100) * credito;
   };
 
   const handleClearFields = () => {
@@ -127,7 +100,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     const results = calculateSimulation(inputs);
     setOutputs(results);
     if (results && user) {
-      setResultTitle(`Resultados para ${inputs.clienteNome || 'Cliente'}`);
+      setResultTitle(`Resultados para ${ inputs.clienteNome || 'Cliente' } `);
       addToHistory(user.uid, inputs);
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -136,7 +109,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   };
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  const formatPercent = (value: number) => `${(value * 100).toFixed(2)}%`.replace('.', ',');
+  const formatPercent = (value: number) => `${ (value * 100).toFixed(2) }% `.replace('.', ',');
 
   const handleSendProposal = async () => {
     if (!outputs || !user) return;
@@ -177,7 +150,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
         praPos: outputs.parcelasAPagarQtd,
         vParcaPag: formatCurrency(outputs.parcelasAPagarValor),
         vParcNorm: formatCurrency(outputs.valorParcela),
-        taxaAdm: `${taxa + fundoReserva}%`.replace('.', ','), // Summing Fundo Reserva to Taxa for display? Or keep separate?
+        taxaAdm: `${ taxa + fundoReserva }% `.replace('.', ','), // Summing Fundo Reserva to Taxa for display? Or keep separate?
         percLanceOf: formatPercent(percentualOfertado / 100),
         vLanceOf: formatCurrency(lanceOfertadoValor),
         percLanceEmb: formatPercent(percentualEmbutido / 100),
@@ -253,7 +226,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 tooltip="Tipo de seguro a ser aplicado."
               />
 
-              <Input label="% da Parcela" name="percentualParcela" value={`${(percentualParcelaCalculado * 100).toFixed(4)}%`.replace('.', ',')} onChange={() => { }} readOnly tooltip="Cálculo automático do percentual mensal do crédito." />
+              <Input label="% da Parcela" name="percentualParcela" value={`${ (percentualParcelaCalculado * 100).toFixed(4) }% `.replace('.', ',')} onChange={() => { }} readOnly tooltip="Cálculo automático do percentual mensal do crédito." />
 
               <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center">
                 <span className="font-semibold text-blue-800 dark:text-blue-200">Parcela Inicial Estimada:</span>
@@ -265,47 +238,34 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
           {/* SECTION 2: CONTEMPLAÇÃO */}
           <Card title="CONTEMPLAÇÃO" className="mb-8 border-l-4 border-orange-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="md:col-span-2 flex justify-end">
-                <div className="w-48">
-                  <SegmentedControl
-                    value={bidMode}
-                    onChange={(val) => setBidMode(val as 'percent' | 'value')}
-                    options={[{ value: 'percent', label: '%' }, { value: 'value', label: 'R$' }]}
-                  />
-                </div>
-              </div>
-
               <Select label="Tipo de Lance" name="diluirLance" value={inputs.diluirLance} onChange={handleInputChange} options={[{ value: 1, label: 'Sim (Abater Prazo)' }, { value: 2, label: 'LUDC' }, { value: 3, label: 'Não (abater parcelas)' }]} tooltip="Como o lance será utilizado." />
               <Input label="Mês da Contemplação" name="lanceNaAssembleia" type="number" min="1" value={inputs.lanceNaAssembleia} onChange={handleInputChange} tooltip="Previsão de contemplação." />
 
-              <Input
-                label={`Lance Ofertado (${bidMode === 'percent' ? '%' : 'R$'})`}
+              <CurrencyPercentInput
+                label="Lance Ofertado"
                 name="percentualOfertado"
-                type={bidMode === 'percent' ? 'number' : 'text'}
-                step="0.1"
-                value={getBidDisplayValue(inputs.percentualOfertado)}
-                onChange={handleBidChange}
-                mask={bidMode === 'value' ? 'currency' : undefined}
+                value={Number(inputs.percentualOfertado) || ''}
+                onChange={handleInputChange}
+                credit={Number(inputs.credito) || 0}
                 tooltip="Lance total ofertado."
               />
 
-              <Input
-                label={`Lance Embutido (${bidMode === 'percent' ? '%' : 'R$'})`}
+              <CurrencyPercentInput
+                label="Lance Embutido"
                 name="percentualEmbutido"
-                type={bidMode === 'percent' ? 'number' : 'text'}
-                step="0.1"
-                value={getBidDisplayValue(inputs.percentualEmbutido)}
-                onChange={handleBidChange}
-                mask={bidMode === 'value' ? 'currency' : undefined}
+                value={Number(inputs.percentualEmbutido) || ''}
+                onChange={handleInputChange}
+                credit={Number(inputs.credito) || 0}
                 tooltip="Parte do lance descontada do crédito."
                 error={errors.percentualEmbutido}
               />
 
-              <Input
-                label={`Lance Livre (${bidMode === 'percent' ? '%' : 'R$'})`}
+              <CurrencyPercentInput
+                label="Lance Livre (Pago)"
                 name="lancePago"
-                value={bidMode === 'percent' ? `${lanceLivreCalculado.toFixed(2)}%` : formatCurrency((lanceLivreCalculado / 100) * (Number(inputs.credito) || 0))}
+                value={lanceLivreCalculado}
                 onChange={() => { }}
+                credit={Number(inputs.credito) || 0}
                 readOnly
                 tooltip="Calculado automaticamente: Lance Ofertado - Lance Embutido."
               />
@@ -339,8 +299,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
               <div>
                 <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400">Resumo da Operação</h3>
                 <ResultDisplay label="Crédito Contratado" value={formatCurrency(Number(inputs.credito) || 0)} />
-                <ResultDisplay label="Prazo Total" value={`${inputs.qtdMeses} meses`} />
-                <ResultDisplay label="Taxa Total" value={`${Number(inputs.taxa) + (Number(inputs.fundoReserva) || 0)}%`} />
+                <ResultDisplay label="Prazo Total" value={`${ inputs.qtdMeses } meses`} />
+                <ResultDisplay label="Taxa Total" value={`${ Number(inputs.taxa) + (Number(inputs.fundoReserva) || 0) }% `} />
               </div>
 
               <div>
@@ -380,7 +340,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                   </div>
                 )}
                 {webhookMessage && (
-                  <div className={`mt-4 p-3 rounded-md text-sm text-center ${webhookMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200'}`}>
+                  <div className={`mt - 4 p - 3 rounded - md text - sm text - center ${ webhookMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200' } `}>
                     {webhookMessage.text}
                   </div>
                 )}
