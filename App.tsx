@@ -170,7 +170,7 @@ const MainApp: React.FC = () => {
             <div
                 className="fixed inset-0 pointer-events-none z-0"
                 style={{
-                    backgroundImage: 'url(/logo_reobote.jpg)',
+                    backgroundImage: 'url(/favicon_new.jpg)',
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'center',
                     backgroundSize: '500px',
