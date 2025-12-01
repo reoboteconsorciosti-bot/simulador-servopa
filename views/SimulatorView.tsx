@@ -65,10 +65,35 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     }
   };
 
-  const handleLanceLivreChange = (name: string, value: number) => {
-    const embutido = Number(inputs.percentualEmbutido) || 0;
-    const novoOfertado = value + embutido;
-    setInputs(prev => ({ ...prev, percentualOfertado: novoOfertado }));
+  const handleBidChange = (type: 'ofertado' | 'embutido' | 'livre', value: number) => {
+    setInputs(prev => {
+      let newOfertado = Number(prev.percentualOfertado) || 0;
+      let newEmbutido = Number(prev.percentualEmbutido) || 0;
+
+      if (type === 'ofertado') {
+        newOfertado = value;
+        // If Total is less than Embedded, reduce Embedded to match Total
+        if (newOfertado < newEmbutido) {
+          newEmbutido = newOfertado;
+        }
+      } else if (type === 'embutido') {
+        newEmbutido = value;
+        // If Embedded is greater than Total, increase Total to match Embedded
+        if (newEmbutido > newOfertado) {
+          newOfertado = newEmbutido;
+        }
+      } else if (type === 'livre') {
+        // Livre = Ofertado - Embutido
+        // So, Ofertado = Livre + Embutido
+        newOfertado = value + newEmbutido;
+      }
+
+      return {
+        ...prev,
+        percentualOfertado: newOfertado,
+        percentualEmbutido: newEmbutido
+      };
+    });
   };
 
   const handleClearFields = () => {
@@ -250,7 +275,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 label="Lance Ofertado"
                 name="percentualOfertado"
                 value={Number(inputs.percentualOfertado) || ''}
-                onChange={handleInputChange}
+                onChange={(name, val) => handleBidChange('ofertado', val)}
                 credit={Number(inputs.credito) || 0}
               />
 
@@ -258,7 +283,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 label="Lance Embutido"
                 name="percentualEmbutido"
                 value={Number(inputs.percentualEmbutido) || ''}
-                onChange={handleInputChange}
+                onChange={(name, val) => handleBidChange('embutido', val)}
                 credit={Number(inputs.credito) || 0}
                 error={errors.percentualEmbutido}
               />
@@ -267,7 +292,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                 label="Lance Livre (Pago)"
                 name="lancePago"
                 value={lanceLivreCalculado}
-                onChange={handleLanceLivreChange}
+                onChange={(name, val) => handleBidChange('livre', val)}
                 credit={Number(inputs.credito) || 0}
               />
 
@@ -281,8 +306,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
                   <span className="font-bold text-lg text-orange-600 dark:text-orange-400">{outputs ? formatCurrency(outputs.lanceEmbutidoValor) : 'R$ 0,00'}</span>
                 </div>
               </div>
-            </div>
-          </Card>
+            </div >
+          </Card >
 
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <button type="button" onClick={handleClearFields} className="w-full sm:flex-1 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 py-3.5 sm:py-3 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold text-base">
@@ -290,8 +315,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
             </button>
             <button type="submit" className="w-full sm:flex-1 bg-blue-600 text-white py-3.5 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-base shadow-lg shadow-blue-500/30">Simular</button>
           </div>
-        </form>
-      </div>
+        </form >
+      </div >
 
       <div className="lg:w-2/5 scroll-mt-24" ref={resultsRef}>
         <Card title={resultTitle}>
@@ -361,7 +386,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
           )}
         </Card>
       </div>
-    </div>
+    </div >
   );
 };
 
