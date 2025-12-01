@@ -165,7 +165,19 @@ const MainApp: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-100 dark:bg-gray-900 text-slate-900 dark:text-slate-100 overflow-x-hidden">
+        <div className="min-h-screen bg-slate-100 dark:bg-gray-900 text-slate-900 dark:text-slate-100 overflow-x-hidden relative">
+            {/* Background Logo */}
+            <div
+                className="fixed inset-0 pointer-events-none z-0"
+                style={{
+                    backgroundImage: 'url(/logo_reobote.jpg)',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center',
+                    backgroundSize: '500px',
+                    opacity: 0.03,
+                    filter: 'grayscale(100%)'
+                }}
+            />
             <nav className="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
