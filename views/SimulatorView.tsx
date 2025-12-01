@@ -238,6 +238,10 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     return tempOutputs ? tempOutputs.valorParcela : 0;
   }, [inputs]);
 
+  const reactiveResults = useMemo(() => {
+    return calculateSimulation(inputs);
+  }, [inputs]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-8">
       <div className="lg:w-3/5">
@@ -310,11 +314,11 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
               <div className="md:col-span-2 grid grid-cols-2 gap-4 bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
                 <div>
                   <span className="block text-sm text-orange-800 dark:text-orange-200">Lance Rec. Próprios</span>
-                  <span className="font-bold text-lg text-orange-600 dark:text-orange-400">{outputs ? formatCurrency(outputs.lanceOfertadoValor - outputs.lanceEmbutidoValor) : 'R$ 0,00'}</span>
+                  <span className="font-bold text-lg text-orange-600 dark:text-orange-400">{reactiveResults ? formatCurrency(reactiveResults.lanceOfertadoValor - reactiveResults.lanceEmbutidoValor) : 'R$ 0,00'}</span>
                 </div>
                 <div>
                   <span className="block text-sm text-orange-800 dark:text-orange-200">Lance Embutido</span>
-                  <span className="font-bold text-lg text-orange-600 dark:text-orange-400">{outputs ? formatCurrency(outputs.lanceEmbutidoValor) : 'R$ 0,00'}</span>
+                  <span className="font-bold text-lg text-orange-600 dark:text-orange-400">{reactiveResults ? formatCurrency(reactiveResults.lanceEmbutidoValor) : 'R$ 0,00'}</span>
                 </div>
               </div>
             </div >
