@@ -233,6 +233,11 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
   }, [inputs.percentualOfertado, inputs.percentualEmbutido]);
 
 
+  const parcelaEstimada = useMemo(() => {
+    const tempOutputs = calculateSimulation(inputs);
+    return tempOutputs ? tempOutputs.valorParcela : 0;
+  }, [inputs]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-8">
       <div className="lg:w-3/5">
@@ -266,7 +271,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
 
               <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex justify-between items-center">
                 <span className="font-semibold text-blue-800 dark:text-blue-200">Parcela Inicial Estimada:</span>
-                <span className="font-bold text-xl text-blue-600 dark:text-blue-400">{outputs ? formatCurrency(outputs.valorParcela) : 'R$ 0,00'}</span>
+                <span className="font-bold text-xl text-blue-600 dark:text-blue-400">{formatCurrency(parcelaEstimada)}</span>
               </div>
             </div>
           </Card>
