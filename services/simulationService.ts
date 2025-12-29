@@ -126,10 +126,10 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
 
     let parcelasAbatidas = 0;
     if (diluirLance === 1) {
-      // Opção 1: Sim (Diluir) -> Mantém Prazo, Reduz Valor
-      parcelasAbatidas = 0;
+      // Opção 1: Sim (Diluir) -> Spreadsheet uses Reduce Term behavior
+      parcelasAbatidas = totalBidParcels;
     } else if (diluirLance === 3) {
-      // Opção 3: Não (Não Diluir) -> Reduz Prazo (Abate do final)
+      // Opção 3: Não (Não Diluir) -> Spreadsheet uses Reduce Term behavior
       parcelasAbatidas = totalBidParcels;
     } else if (diluirLance === 2) {
       // LUDC
