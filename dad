@@ -1,0 +1,230 @@
+[33mcommit 837be71506961c895f579b847df4e905112a3117[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Fri Dec 19 12:15:52 2025 -0400
+
+    Forcar atualizacao do banco de dados
+
+[33mcommit 4324d0605b8f18480471bf90a932c10d482dfa36[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Fri Dec 19 11:48:17 2025 -0400
+
+    Adiciona tabela Sale para o Dashboard
+
+[33mcommit 37339a4d1189b3b0377ec93244fcb6e7a5011049[m[33m ([m[1;31morigin/staging[m[33m)[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 15:05:55 2025 -0400
+
+    fix calculation logic to use exact bid values and correct amortization
+
+[33mcommit cd7656c4f8674a55591576890b5f0c129a6f1e6d[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 14:02:12 2025 -0400
+
+    feat: expand simulator fields and refine calculation logic
+
+[33mcommit 22747781f7fcebbc21cb97c6d95e6bdc799a5a9c[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:24:50 2025 -0400
+
+    revert background to single large image
+
+[33mcommit 8061da651d2d1943c6d63112869ea4f68fba7bda[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:19:57 2025 -0400
+
+    fix background overlay issue and increase size
+
+[33mcommit 7e64f54c5e799d815fe3a2886bd26bfe6254d55e[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:15:33 2025 -0400
+
+    update background to repeated pattern
+
+[33mcommit 37884de9ba47cd814194426f4bc8183b3fcbdda1[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:11:57 2025 -0400
+
+    update background logo size and opacity
+
+[33mcommit 15b173ff38fe0657d73251ec94028d17ab5f2ff8[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:09:26 2025 -0400
+
+    update background image to favicon_new.jpg
+
+[33mcommit 2f9c4a41ecbf29e80a1348cc14d0da6a929e6a9a[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:07:12 2025 -0400
+
+    add background logo com baixa opacidade
+
+[33mcommit 490ff83f9ded3ba338f7608a03a6c1fa66341ddb[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 13:14:48 2025 +0800
+
+    fix calculo de lance considerando credito e nao saldo devedor
+
+[33mcommit 01f8cd23595d58bbfc0662ccf38e7b105209672e[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 13:09:19 2025 +0800
+
+    update validacao nome cliente opcional na simulacao e obrigatorio no pdf
+
+[33mcommit 6ec01e546a86d14b1cc435c4dd17f2e84e21a6b2[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 13:02:03 2025 +0800
+
+    update logica de lances para manter ofertado fixo e ajustar componentes
+
+[33mcommit 970c026f94dc8ea801a8fe539b5ffd6f3a3c43d9[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:56:01 2025 +0800
+
+    fix lances rec proprios e embutido nao atualizando automaticamente
+
+[33mcommit 8171bf6b79e2bef7c77341301d95d8ffd22888b1[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:49:37 2025 +0800
+
+    fix parcela inicial estimada nao atualizando automaticamente
+
+[33mcommit 8e026511acdd6247db274ceef93a3431a7b466c3[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:36:44 2025 +0800
+
+    update logica de lance embutido para preservar lance livre
+
+[33mcommit eecdb1279f8d9bf832a5709ff9698fe3eedcef44[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:26:22 2025 +0800
+
+    update estilo de seguro prestamista para rounded-full
+
+[33mcommit d0afa194bb7ba07b12d0c5d26e8450633504673f[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:19:21 2025 +0800
+
+    update inputs de lances ofertado e livre e embutido para casas decimais 3
+
+[33mcommit ff85af2774260df81e0d3bca5bf08203888876c0[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 12:13:16 2025 +0800
+
+     melhoria de UX nos lances
+
+[33mcommit a2a4e8131ec6803db9b7a099890a9d000b18459e[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 11:34:49 2025 +0800
+
+    fix campos atualizados automaticamente lances
+
+[33mcommit dc65c9808c858712ccf71ab73c0dc197d57ed9cc[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 11:24:47 2025 +0800
+
+    melhoria de design de botoes de porcentagem
+
+[33mcommit e2cbbd5f678503b77abd6f9c2e8b5497451df42b[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 11:19:42 2025 +0800
+
+    Fix erro de comentarios
+
+[33mcommit aba3e0559296907f5a70a6d36340d120ed6196de[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 11:16:18 2025 +0800
+
+    Design botao de troca porentagem individual
+
+[33mcommit c6e29a94883d73495f2bbd2bdc1e65bbd5dd9653[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 11:07:36 2025 +0800
+
+    Melhoria de design troca de botao lances
+
+[33mcommit 9c11acd1aa4b09f33deb28c32dcf814fb48f2e8b[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 10:49:59 2025 +0800
+
+    fields completos, adicionar campos origatorios
+
+[33mcommit f3f7d4d671fbd0bb4648183d98bf099b73367a42[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 10:40:08 2025 +0800
+
+    Layout reestruturado separa proposta e contemplacao
+
+[33mcommit d0e41751a325016f748523c0da60463ef5a1ca80[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 10:08:18 2025 +0800
+
+    Switch to JS seed
+
+[33mcommit 70da407ca30a1f08ae08d28881b839e5e0898a4d[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 10:02:06 2025 +0800
+
+    Fix seed config
+
+[33mcommit 222200ed067fa933f794d891a36557c9550182b2[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Mon Dec 1 09:57:06 2025 +0800
+
+    Fix package.json and seed command
+
+[33mcommit a85579d67fbbcfc0751ae85fdd776f7d20ec2af7[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Sat Nov 29 14:51:22 2025 +0800
+
+    Corrigindo dependencias
+
+[33mcommit 0789a8f02dc2c71e95e731970b120c440f65cc17[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Sat Nov 29 14:47:24 2025 +0800
+
+    Adiciona ts-node para seed
+
+[33mcommit d7fc0e815d82abd9dd17edd6c5229f019f2d3c10[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Sat Nov 29 14:44:47 2025 +0800
+
+    Adiciona script de seed
+
+[33mcommit a1293fe5f36da7e85f79236fe4087ef50cb934a3[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Thu Nov 27 10:11:55 2025 -0400
+
+    Fix: Calculos de lance: Prazos e pos contemplacao
+
+[33mcommit 981f83c8eb146c7e37acecd1a1437fa44a6c5638[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Wed Nov 26 10:38:47 2025 -0400
+
+    Fix: Calculos de lance. Alterado Sim não para valor ou prazo
+
+[33mcommit dc887dc874c2a43652026f0fd400f2b09523fd66[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Wed Nov 26 09:57:58 2025 -0400
+
+    Fix: Calculos de lance Sem Diluicao
+
+[33mcommit ced49970b173e4df5f01b15babdb181f5e7bd162[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Tue Nov 25 17:07:01 2025 -0400
+
+    Fix: nome do consultor
+
+[33mcommit dc2f3c168112437b513a3efb000c0be37b9f3764[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Tue Nov 25 16:14:23 2025 -0400
+
+    Ajuste de mensagem de geracao de pdf
+
+[33mcommit 3f35e5d2b9c292cbf26080665400937db2d9eb24[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti@gmail.com>
+Date:   Tue Nov 25 16:08:56 2025 -0400
+
+    Fix: Webhook ponte criada
+
+[33mcommit e9af47a0d42fd4f055066695960ce49135989398[m
+Author: reoboteconsorciosti-bot <reoboteconsorciosti

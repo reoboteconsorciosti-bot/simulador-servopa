@@ -94,7 +94,8 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
 
     if (percentualOfertadoDecimal > 0) {
       const rawParcels = ((credito * N13) * percentualOfertadoDecimal) / O16;
-      totalBidParcels = round(rawParcels, 0);
+      // Remove rounding to allow fractional parcels for exact value matching
+      totalBidParcels = rawParcels;
       C19_lance_ofertado_val = totalBidParcels * O16;
     } else {
       C19_lance_ofertado_val = qtdParcelasOfertado * O16;
@@ -102,7 +103,8 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     }
 
     const L21 = ifError(() => ((credito * N13) * percentualEmbutidoDecimal) / O16, 0);
-    const D20_qtd_parcelas_embutido = round(L21, 0);
+    // Remove rounding for embedded bid as well
+    const D20_qtd_parcelas_embutido = L21;
     const C20_lance_embutido_val = D20_qtd_parcelas_embutido * O16;
 
     // Parcelas em Dinheiro (Cash)
