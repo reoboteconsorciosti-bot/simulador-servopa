@@ -94,8 +94,7 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
 
     if (percentualOfertadoDecimal > 0) {
       const rawParcels = ((credito * N13) * percentualOfertadoDecimal) / O16;
-      // Remove rounding to allow fractional parcels for exact value matching
-      totalBidParcels = rawParcels;
+      totalBidParcels = round(rawParcels, 0);
       C19_lance_ofertado_val = totalBidParcels * O16;
     } else {
       C19_lance_ofertado_val = qtdParcelasOfertado * O16;
@@ -103,8 +102,7 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     }
 
     const L21 = ifError(() => ((credito * N13) * percentualEmbutidoDecimal) / O16, 0);
-    // Remove rounding for embedded bid as well
-    const D20_qtd_parcelas_embutido = L21;
+    const D20_qtd_parcelas_embutido = round(L21, 0);
     const C20_lance_embutido_val = D20_qtd_parcelas_embutido * O16;
 
     // Parcelas em Dinheiro (Cash)
@@ -115,16 +113,24 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     const B30_creditoDisponivel = credito - C20_lance_embutido_val;
 
     // Flags de Diluir Lance (1 ou 0)
-    // 1: Diluir (Reduz valor da parcela)
-    // 3: Abater (Reduz prazo)
+    // 1: Diluir (Reduz valor da parcela) ? No, Code says 1 = Abater Prazo (Reduce Term)
+    // 3: Abater (Reduz prazo) ? No, Code says 3 = Abater Parcelas (Reduce Value)
+
+    // CORRECTION BASED ON SPREADSHEET:
+    // User selected "Não" (Option 3) in Spreadsheet and got Reduced Term (161 parcels).
+    // User selected "Sim" (Option 1) ... we assume "Dilute" means Reduce Value.
+
+    // So we map:
+    // Option 1 (Sim - "Diluir"): Should Reduce Value (parcelasAbatidas = 0)
+    // Option 3 (Não - "Não Diluir"): Should Reduce Term (parcelasAbatidas = totalBidParcels)
 
     let parcelasAbatidas = 0;
     if (diluirLance === 1) {
-      // Opção 1: Sim (Abater Prazo) -> Reduz Prazo
-      parcelasAbatidas = totalBidParcels;
-    } else if (diluirLance === 3) {
-      // Opção 3: Não (abater parcelas) -> Mantém Prazo (Diluir) -> Reduz Valor
+      // Opção 1: Sim (Diluir) -> Mantém Prazo, Reduz Valor
       parcelasAbatidas = 0;
+    } else if (diluirLance === 3) {
+      // Opção 3: Não (Não Diluir) -> Reduz Prazo (Abate do final)
+      parcelasAbatidas = totalBidParcels;
     } else if (diluirLance === 2) {
       // LUDC
       parcelasAbatidas = 0;
