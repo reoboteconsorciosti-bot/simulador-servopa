@@ -126,10 +126,11 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
 
     let parcelasAbatidas = 0;
     if (diluirLance === 1) {
-      // Opção 1: Sim (Diluir) -> Spreadsheet uses Reduce Term behavior
-      parcelasAbatidas = totalBidParcels;
+      // Opção 1: Sim (Diluir) -> Abate APENAS o Lance Embutido do Prazo
+      // O Lance Livre (Cash) é usado para diluir o valor da parcela (mecanismo automático da amortização)
+      parcelasAbatidas = D20_qtd_parcelas_embutido;
     } else if (diluirLance === 3) {
-      // Opção 3: Não (Não Diluir) -> Spreadsheet uses Reduce Term behavior
+      // Opção 3: Não (Não Diluir) -> Spreadsheet uses Reduce Term behavior (Total)
       parcelasAbatidas = totalBidParcels;
     } else if (diluirLance === 2) {
       // LUDC

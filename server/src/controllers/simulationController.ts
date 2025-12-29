@@ -100,7 +100,7 @@ export const listSimulations = async (req: AuthRequest, res: Response) => {
         const simulations = await prisma.simulation.findMany({
             where: whereClause,
             orderBy: { createdAt: 'desc' },
-            take: 100 // Increased limit for insights
+            // take: 100 // Limit removed to show full history
         });
 
         // Map to frontend format
