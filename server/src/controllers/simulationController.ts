@@ -38,58 +38,30 @@ export const listSimulations = async (req: AuthRequest, res: Response) => {
 
         // Role-based Access Control for Filters
         if (requestingUserRole === 'Admin') {
-            // Admin can see everything and filter by anything
+            // Admin can see everything
             if (filterUserId) whereClause.userId = filterUserId;
-
-            // For team filtering, we need to find users in that team first
-            if (filterTeamId) {
-                const usersInTeam = await prisma.user.findMany({
-                    where: { teamId: filterTeamId },
-                    select: { id: true }
-                });
-                const userIds = usersInTeam.map((u: { id: string }) => u.id);
-
-                // If filtering by both user and team, ensure user belongs to team
-                if (filterUserId) {
-                    if (!userIds.includes(filterUserId)) {
-                        return res.json([]); // User not in team
-                    }
-                    whereClause.userId = filterUserId;
-                } else {
-                    whereClause.userId = { in: userIds };
-                }
-            }
+            if (filterTeamId) whereClause.user = { teamId: filterTeamId }; // Optimized relational filter
         } else if (requestingUserRole === 'Gerente' || requestingUserRole === 'Supervisor') {
             // Managers/Supervisors can see their own data and their team's data
-            // First, get the requester's team
             const requester = await prisma.user.findUnique({
                 where: { id: requestingUserId },
                 select: { teamId: true }
             });
-
             const myTeamId = requester?.teamId;
 
             if (!myTeamId) {
-                // If no team assigned, can only see own data
                 whereClause.userId = requestingUserId;
             } else {
-                // Can see data from users in my team
-                const usersInMyTeam = await prisma.user.findMany({
-                    where: { teamId: myTeamId },
-                    select: { id: true }
-                });
-                const teamUserIds = usersInMyTeam.map((u: { id: string }) => u.id);
-
+                // Optimized: Filter by My Team OR My Own ID (redundant if I am in my team)
+                // If filterUserId is provided, ensure it's in the team
                 if (filterUserId) {
-                    // Can only filter by users within their team
-                    if (teamUserIds.includes(filterUserId)) {
-                        whereClause.userId = filterUserId;
-                    } else {
-                        return res.status(403).json({ message: 'Access denied to this user data' });
-                    }
+                    // We still need to check if target user is in team for security, 
+                    // or we can rely on the query: userId = target AND user.teamId = myTeam
+                    whereClause.userId = filterUserId;
+                    whereClause.user = { teamId: myTeamId };
                 } else {
                     // Show all team data
-                    whereClause.userId = { in: teamUserIds };
+                    whereClause.user = { teamId: myTeamId };
                 }
             }
         } else {
@@ -100,14 +72,27 @@ export const listSimulations = async (req: AuthRequest, res: Response) => {
         const simulations = await prisma.simulation.findMany({
             where: whereClause,
             orderBy: { createdAt: 'desc' },
-            // take: 100 // Limit removed to show full history
+            select: {
+                id: true,
+                createdAt: true,
+                userId: true,
+                inputs: true,
+                // Exclude 'outputs' to save bandwidth
+                user: { // Include consultant name for display if needed (HistoryView uses user list context, but this is helpful)
+                    select: {
+                        name: true,
+                        teamId: true
+                    }
+                }
+            }
         });
 
         // Map to frontend format
         const formattedSimulations = simulations.map((sim: any) => ({
             ...sim.inputs as object,
             id: sim.id,
-            timestamp: sim.createdAt.toISOString()
+            timestamp: sim.createdAt.toISOString(),
+            consultorNome: sim.inputs.consultorNome || sim.user?.name // Fallback or override
         }));
 
         res.json(formattedSimulations);
