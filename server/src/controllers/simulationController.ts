@@ -5,9 +5,37 @@ interface AuthRequest extends Request {
     user?: any;
 }
 
+import { z } from 'zod';
+
+const simulationInputSchema = z.object({
+    clienteNome: z.string().optional(),
+    consultorNome: z.string().optional(),
+    tipoBem: z.string().optional(),
+    credito: z.union([z.number(), z.string()]),
+    qtdMeses: z.union([z.number(), z.string()]),
+    taxa: z.union([z.number(), z.string()]),
+    planoLight: z.union([z.number(), z.string()]), // Frontend sends number, but loose validation is safer for now
+    seguroPrestamista: z.union([z.number(), z.string()]),
+    percentualOfertado: z.union([z.number(), z.string()]).optional(),
+    percentualEmbutido: z.union([z.number(), z.string()]).optional(),
+    qtdParcelasOfertado: z.union([z.number(), z.string()]).optional(),
+    diluirLance: z.union([z.number(), z.string()]).optional(),
+    lanceNaAssembleia: z.union([z.number(), z.string()]).optional(),
+}).passthrough(); // Allow other fields if schema evolves but validate core structure
+
 export const saveSimulation = async (req: AuthRequest, res: Response) => {
     const { inputs, outputs } = req.body;
     const userId = req.user.userId;
+
+    // Validate inputs structure
+    const validationResult = simulationInputSchema.safeParse(inputs);
+
+    if (!validationResult.success) {
+        return res.status(400).json({
+            message: 'Invalid simulation data format',
+            details: validationResult.error.issues
+        });
+    }
 
     try {
         const simulation = await prisma.simulation.create({
