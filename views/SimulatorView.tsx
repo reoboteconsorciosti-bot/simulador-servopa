@@ -74,10 +74,17 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     setWebhookMessage(null);
   };
 
-  const validateInputs = (): Partial<Record<keyof SimulationInputs, string>> => {
+  const validateInputs = (context: 'simulation' | 'proposal'): Partial<Record<keyof SimulationInputs, string>> => {
     const newErrors: Partial<Record<keyof SimulationInputs, string>> = {};
-    if (!inputs.clienteNome.trim()) newErrors.clienteNome = 'O nome do cliente é obrigatório.';
+
+    // Client Name is only authoritative for the Proposal PDF
+    if (context === 'proposal' && !inputs.clienteNome.trim()) {
+      newErrors.clienteNome = 'O nome do cliente é obrigatório para gerar a proposta.';
+    }
+
+    // Consultant Name is required for both (or maybe just proposal? implied required generally)
     if (!inputs.consultorNome.trim()) newErrors.consultorNome = 'O nome do consultor é obrigatório.';
+
     if (inputs.credito === '' || Number(inputs.credito) <= 0) newErrors.credito = 'O valor do crédito deve ser maior que zero.';
     if (inputs.qtdMeses === '' || Number(inputs.qtdMeses) <= 0) newErrors.qtdMeses = 'O prazo deve ser maior que zero.';
     if (inputs.taxa === '' || Number(inputs.taxa) <= 0) newErrors.taxa = 'A taxa de administração é obrigatória.';
@@ -89,7 +96,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
 
   const handleSimulate = (e: React.FormEvent) => {
     e.preventDefault();
-    const validationErrors = validateInputs();
+    const validationErrors = validateInputs('simulation');
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setOutputs(null); // Clear previous results
@@ -100,6 +107,8 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     setOutputs(results);
     if (results && user) {
       setResultTitle(`Resultados para ${inputs.clienteNome || 'Cliente'}`);
+      // Only add to history if client name is present? Or allow anonymous history?
+      // User likely wants to save it anyway.
       addToHistory(user.uid, inputs);
 
       // Smart scroll to results (works for both mobile/stacked and desktop/side-by-side)
@@ -116,7 +125,7 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
     if (!outputs || !user) return;
 
     // Re-validate before sending
-    const validationErrors = validateInputs();
+    const validationErrors = validateInputs('proposal');
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       setWebhookMessage({ type: 'error', text: 'Preencha todos os campos obrigatórios antes de gerar a proposta.' });
