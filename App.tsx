@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import ConstructionView from './views/ConstructionView';
 
 // ... (other imports remain, but we handle them by context if possible, otherwise we assume they persist)
@@ -22,7 +23,7 @@ import AdminView from './views/AdminView';
 import HistoryView from './views/HistoryView';
 import UserModal from './components/UserModal';
 import SessionWarningModal from './components/SessionWarningModal';
-import ConstructionView from './views/ConstructionView';
+
 
 
 const LoginScreen: React.FC<{ onLogin: (email: string, password?: string) => void }> = ({ onLogin }) => {
@@ -239,7 +240,7 @@ const MainApp: React.FC = () => {
                                                 onMouseLeave={() => setIsSimDropdownOpen(false)}
                                             >
                                                 <button
-                                                    ref={(el) => (navRefs.current['simulator'] = el)}
+                                                    ref={(el) => { navRefs.current['simulator'] = el; }}
                                                     className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-xs lg:text-sm font-medium transition-colors duration-200 flex items-center gap-1 ${currentView === 'simulator' || currentView === 'construction'
                                                         ? 'text-blue-600 dark:text-blue-400'
                                                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
@@ -282,7 +283,7 @@ const MainApp: React.FC = () => {
                                     return (
                                         <button
                                             key={tab.id}
-                                            ref={(el) => (navRefs.current[tab.id] = el)}
+                                            ref={(el) => { navRefs.current[tab.id] = el; }}
                                             onClick={() => handleViewChange(tab.id)}
                                             className={`relative z-10 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-xs lg:text-sm font-medium transition-colors duration-200 ${currentView === tab.id
                                                 ? 'text-blue-600 dark:text-blue-400'
