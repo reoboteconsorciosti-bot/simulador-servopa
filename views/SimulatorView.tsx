@@ -54,32 +54,6 @@ const SimulatorView: React.FC<SimulatorViewProps> = ({ simulationToLoad, onSimul
 }
   }, [simulationToLoad, onSimulationLoaded, user]);
 
-// Live calculation effect
-useEffect(() => {
-  // Only auto-calculate if we have outputs (meaning simulation has been run at least once)
-  // We check outputs !== null to ensure we are in "Results View" mode.
-  // Note: If user clears fields and makes simulation invalid, calculateSimulation returns null.
-  // If we setOutputs(null), the results disappear. To prevent this "flicker" or hiding,
-  // we only update if the new result is valid, OR we could accept that invalid inputs hide results.
-  // Given the requirement "apenas ir atualizando", keeping the last valid result usually feels better 
-  // while typing, but showing broken math is bad. 
-  // However, since calculateSimulation returns null on error, let's stick to updating ONLY if valid.
-
-  if (outputs) {
-    const timer = setTimeout(() => {
-      const newResults = calculateSimulation(inputs);
-      if (newResults) {
-        setOutputs(newResults);
-      }
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(timer);
-  }
-}, [inputs]); // We intentionally do not include 'outputs' in dependency to avoid loops, but we use it in the conditional check. 
-// Wait, if 'outputs' is not in dependency, the effect uses stale 'outputs' closure?
-// Yes. We need 'outputs' in dependency OR use a ref to track "isLiveMode".
-// Using a ref is safer for "isLiveMode".
-
 const isLiveMode = useRef(false);
 
 // Update live mode when outputs are set via the button logic
@@ -89,7 +63,7 @@ useEffect(() => {
   }
 }, [outputs]);
 
-// Correct Live Calculation Effect using Ref
+// Live calculation effect
 useEffect(() => {
   if (isLiveMode.current) {
     const timer = setTimeout(() => {
@@ -97,7 +71,8 @@ useEffect(() => {
       if (newResults) {
         setOutputs(newResults);
       }
-    }, 500);
+    }, 500); // 500ms debounce
+
     return () => clearTimeout(timer);
   }
 }, [inputs]);
