@@ -1,4 +1,15 @@
-import React, { useState } from 'react';
+import ConstructionView from './views/ConstructionView';
+
+// ... (other imports remain, but we handle them by context if possible, otherwise we assume they persist)
+// Ideally we just replace the necessary chunks.
+// Since "View" and imports are at the top, I'll do a MultiReplace or large Replace if I want to be safe.
+// Let's stick to Replace for the Nav part, but I need to inject the import too.
+// I'll do the import first in a separate Replace if needed, or assume I can rewrite the Nav section significantly.
+
+// Actually, I need to update the `View` type definition which is earlier in the file.
+// And `renderView` function.
+// And the `nav` logic.
+// This suggests a larger update or multiple chunks. MultiReplace is better.
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider, useTheme } from './hooks/useTheme';
 import { ToastProvider } from './contexts/ToastContext';
@@ -11,6 +22,8 @@ import AdminView from './views/AdminView';
 import HistoryView from './views/HistoryView';
 import UserModal from './components/UserModal';
 import SessionWarningModal from './components/SessionWarningModal';
+import ConstructionView from './views/ConstructionView';
+
 
 const LoginScreen: React.FC<{ onLogin: (email: string, password?: string) => void }> = ({ onLogin }) => {
     const [email, setEmail] = useState('');
@@ -72,7 +85,7 @@ const LoginScreen: React.FC<{ onLogin: (email: string, password?: string) => voi
     );
 };
 
-type View = 'simulator' | 'insights' | 'admin' | 'history';
+type View = 'simulator' | 'construction' | 'insights' | 'admin' | 'history';
 
 const MainApp: React.FC = () => {
     const { user, logout, updateUser, users } = useAuth();
@@ -87,6 +100,8 @@ const MainApp: React.FC = () => {
     const [simulationToLoad, setSimulationToLoad] = useState<SimulationInputs | null>(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isSimDropdownOpen, setIsSimDropdownOpen] = useState(false);
+
 
     if (!user) {
         return null; // Should not happen if wrapped correctly
@@ -145,6 +160,11 @@ const MainApp: React.FC = () => {
         switch (currentView) {
             case 'simulator':
                 return <SimulatorView
+                    simulationToLoad={simulationToLoad}
+                    onSimulationLoaded={() => setSimulationToLoad(null)}
+                />;
+            case 'construction':
+                return <ConstructionView
                     simulationToLoad={simulationToLoad}
                     onSimulationLoaded={() => setSimulationToLoad(null)}
                 />;
@@ -209,19 +229,70 @@ const MainApp: React.FC = () => {
                                     }}
                                 />
 
-                                {tabs.map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        ref={(el) => (navRefs.current[tab.id] = el)}
-                                        onClick={() => handleViewChange(tab.id)}
-                                        className={`relative z-10 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-xs lg:text-sm font-medium transition-colors duration-200 ${currentView === tab.id
-                                            ? 'text-blue-600 dark:text-blue-400'
-                                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                                            }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
+                                {tabs.map((tab) => {
+                                    if (tab.id === 'simulator') {
+                                        return (
+                                            <div
+                                                key="simulator-dropdown"
+                                                className="relative z-10"
+                                                onMouseEnter={() => setIsSimDropdownOpen(true)}
+                                                onMouseLeave={() => setIsSimDropdownOpen(false)}
+                                            >
+                                                <button
+                                                    ref={(el) => (navRefs.current['simulator'] = el)}
+                                                    className={`px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-xs lg:text-sm font-medium transition-colors duration-200 flex items-center gap-1 ${currentView === 'simulator' || currentView === 'construction'
+                                                        ? 'text-blue-600 dark:text-blue-400'
+                                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                                                        }`}
+                                                >
+                                                    Simulador
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 lg:h-4 lg:w-4 transition-transform duration-200 ${isSimDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                </button>
+
+                                                {/* Dropdown Menu */}
+                                                <div
+                                                    className={`absolute top-full left-0 mt-1 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden transform transition-all duration-200 origin-top-left ${isSimDropdownOpen
+                                                        ? 'opacity-100 scale-100 translate-y-0 visible'
+                                                        : 'opacity-0 scale-95 -translate-y-2 invisible'
+                                                        }`}
+                                                >
+                                                    <div className="py-1">
+                                                        <button
+                                                            onClick={() => { handleViewChange('simulator'); setIsSimDropdownOpen(false); }}
+                                                            className={`block w-full text-left px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${currentView === 'simulator' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10' : 'text-slate-700 dark:text-slate-300'}`}
+                                                        >
+                                                            <span className="font-semibold block">Padrão</span>
+                                                            <span className="text-xs text-slate-500 dark:text-slate-500">Simulador clássico servopa</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => { handleViewChange('construction'); setIsSimDropdownOpen(false); }}
+                                                            className={`block w-full text-left px-4 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors ${currentView === 'construction' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/10' : 'text-slate-700 dark:text-slate-300'}`}
+                                                        >
+                                                            <span className="font-semibold block">Cons. para construção</span>
+                                                            <span className="text-xs text-slate-500 dark:text-slate-500">Consórcio como investimento</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            ref={(el) => (navRefs.current[tab.id] = el)}
+                                            onClick={() => handleViewChange(tab.id)}
+                                            className={`relative z-10 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full text-xs lg:text-sm font-medium transition-colors duration-200 ${currentView === tab.id
+                                                ? 'text-blue-600 dark:text-blue-400'
+                                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                                                }`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                         <div className="flex items-center space-x-2 lg:space-x-4">
@@ -274,6 +345,22 @@ const MainApp: React.FC = () => {
                             >
                                 Simulador
                             </button>
+                            {currentView === 'simulator' || currentView === 'construction' ? (
+                                <div className="pl-6 space-y-2 border-l-2 border-slate-100 dark:border-slate-700 ml-2 mb-2">
+                                    <button
+                                        onClick={() => handleViewChange('simulator')}
+                                        className={`block w-full text-left py-2 text-sm ${currentView === 'simulator' ? 'text-blue-600 font-bold' : 'text-slate-500'}`}
+                                    >
+                                        • Padrão
+                                    </button>
+                                    <button
+                                        onClick={() => handleViewChange('construction')}
+                                        className={`block w-full text-left py-2 text-sm ${currentView === 'construction' ? 'text-blue-600 font-bold' : 'text-slate-500'}`}
+                                    >
+                                        • Cons. para construção
+                                    </button>
+                                </div>
+                            ) : null}
                             <button
                                 onClick={() => handleViewChange('history')}
                                 className={`${currentView === 'history' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'} block px-4 py-3 rounded-lg text-base font-medium w-full text-left transition-colors`}
