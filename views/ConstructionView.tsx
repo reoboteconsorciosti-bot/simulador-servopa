@@ -239,7 +239,6 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                 <Input label="Nome do Cliente" name="clienteNome" value={inputs.clienteNome} onChange={handleInputChange} tooltip="Nome completo do cliente para identificação na proposta." error={errors.clienteNome} />
                             </div>
                             <Input label="Nome do Consultor" name="consultorNome" value={inputs.consultorNome} onChange={handleInputChange} tooltip="Seu nome, preenchido automaticamente a partir do seu perfil. Você pode editar este campo se necessário." error={errors.consultorNome} />
-                            <Select label="Tipo de Bem" name="tipoBem" value={inputs.tipoBem} onChange={handleInputChange} options={[{ value: 'Imóvel', label: 'Imóvel' }, { value: 'Automóvel', label: 'Automóvel' }]} tooltip="Define o tipo de consórcio. Imóveis geralmente têm prazos mais longos." />
                         </div>
                     </Card>
 
