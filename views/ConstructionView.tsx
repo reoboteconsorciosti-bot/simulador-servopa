@@ -30,6 +30,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
     const [webhookMessage, setWebhookMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [progressMessage, setProgressMessage] = useState<string>('');
     const [contemplationUnit, setContemplationUnit] = useState<'months' | 'years'>('months');
+    const [bidType, setBidType] = useState<'sorteio' | 'fixo' | 'livre'>('livre');
 
     useEffect(() => {
         if (simulationToLoad && user) {
@@ -294,7 +295,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                             </div>
                             <div className="relative">
                                 <Input
-                                    label="Mês da Contemplação"
+                                    label="Data de Contemplação"
                                     name="mesContemplacaoDisplay"
                                     type="number"
                                     min="0"
@@ -364,13 +365,62 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                     </Card>
 
                     <Card title="Configuração do Lance" className="mb-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Input label="Lance Ofertado (%)" name="percentualOfertado" type="number" step="0.1" value={inputs.percentualOfertado} onChange={handleInputChange} tooltip="Percentual do crédito que o cliente ofertará como lance. Pode incluir o lance embutido." />
-                            <Input label="Lance Embutido (%)" name="percentualEmbutido" type="number" step="0.1" value={inputs.percentualEmbutido} onChange={handleInputChange} tooltip="Parte do lance que será descontada do próprio crédito, diminuindo o valor que o cliente recebe." error={errors.percentualEmbutido} />
-                            <Input label="Lance Pago (%)" name="lancePago" value={Math.max(0, (Number(inputs.percentualOfertado) || 0) - (Number(inputs.percentualEmbutido) || 0)).toFixed(2)} onChange={() => { }} readOnly tooltip="Calculado automaticamente: Lance Ofertado - Lance Embutido." />
-                            <Select label="Forma de Abatimento do Lance" name="diluirLance" value={inputs.diluirLance} onChange={handleInputChange} options={[{ value: 1, label: 'Sim (Abater Prazo)' }, { value: 2, label: 'LUDC' }, { value: 3, label: 'Não (abater parcelas)' }]} tooltip="Define se o lance será usado para reduzir o prazo (Sim) ou reduzir o valor da parcela (Não)." />
-                            <Input label="Mês do Lance (Assembleia)" name="lanceNaAssembleia" type="number" min="1" value={inputs.lanceNaAssembleia} onChange={handleInputChange} tooltip="O número da assembleia em que o cliente pretende dar o lance para ser contemplado." />
+                        <div className="mb-6">
+                            <div className="flex p-1 space-x-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl">
+                                <button
+                                    type="button"
+                                    onClick={() => setBidType('sorteio')}
+                                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${bidType === 'sorteio'
+                                        ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50'
+                                        }`}
+                                >
+                                    Sorteio
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setBidType('fixo')}
+                                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${bidType === 'fixo'
+                                        ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50'
+                                        }`}
+                                >
+                                    Lance Fixo
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setBidType('livre')}
+                                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${bidType === 'livre'
+                                        ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50'
+                                        }`}
+                                >
+                                    Lance Livre
+                                </button>
+                            </div>
                         </div>
+
+                        {bidType === 'livre' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
+                                <Input label="Lance Ofertado (%)" name="percentualOfertado" type="number" step="0.1" value={inputs.percentualOfertado} onChange={handleInputChange} tooltip="Percentual do crédito que o cliente ofertará como lance. Pode incluir o lance embutido." />
+                                <Input label="Lance Embutido (%)" name="percentualEmbutido" type="number" step="0.1" value={inputs.percentualEmbutido} onChange={handleInputChange} tooltip="Parte do lance que será descontada do próprio crédito, diminuindo o valor que o cliente recebe." error={errors.percentualEmbutido} />
+                                <Input label="Lance Pago (%)" name="lancePago" value={Math.max(0, (Number(inputs.percentualOfertado) || 0) - (Number(inputs.percentualEmbutido) || 0)).toFixed(2)} onChange={() => { }} readOnly tooltip="Calculado automaticamente: Lance Ofertado - Lance Embutido." />
+                                <Select label="Forma de Abatimento do Lance" name="diluirLance" value={inputs.diluirLance} onChange={handleInputChange} options={[{ value: 1, label: 'Sim (Abater Prazo)' }, { value: 2, label: 'LUDC' }, { value: 3, label: 'Não (abater parcelas)' }]} tooltip="Define se o lance será usado para reduzir o prazo (Sim) ou reduzir o valor da parcela (Não)." />
+                                <Input label="Mês do Lance (Assembleia)" name="lanceNaAssembleia" type="number" min="1" value={inputs.lanceNaAssembleia} onChange={handleInputChange} tooltip="O número da assembleia em que o cliente pretende dar o lance para ser contemplado." />
+                            </div>
+                        )}
+
+                        {bidType === 'sorteio' && (
+                            <div className="text-center py-8 text-slate-500 dark:text-slate-400 animate-fadeIn bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
+                                <p>Configuração de Sorteio (Em breve)</p>
+                            </div>
+                        )}
+
+                        {bidType === 'fixo' && (
+                            <div className="text-center py-8 text-slate-500 dark:text-slate-400 animate-fadeIn bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
+                                <p>Configuração de Lance Fixo (Em breve)</p>
+                            </div>
+                        )}
                     </Card>
 
                     <div className="flex flex-col sm:flex-row gap-4 pt-2">
