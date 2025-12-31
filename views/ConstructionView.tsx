@@ -331,8 +331,8 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                             type="button"
                                             onClick={() => setContemplationUnit('months')}
                                             className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded transition-colors ${contemplationUnit === 'months'
-                                                    ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
-                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                                ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                                 }`}
                                         >
                                             Meses
@@ -341,8 +341,8 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                             type="button"
                                             onClick={() => setContemplationUnit('years')}
                                             className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded transition-colors ${contemplationUnit === 'years'
-                                                    ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
-                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                                ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                                 }`}
                                         >
                                             Anos
@@ -350,7 +350,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                     </div>
                                 </div>
                                 {Number(inputs.mesContemplacao) > 0 && (
-                                    <div className="absolute top-10 right-2 pointer-events-none">
+                                    <div className="absolute top-10 right-8 pointer-events-none">
                                         <span className="text-[10px] sm:text-xs font-medium text-slate-400 dark:text-slate-500">
                                             {contemplationUnit === 'years'
                                                 ? `${Number(inputs.mesContemplacao)} meses`
