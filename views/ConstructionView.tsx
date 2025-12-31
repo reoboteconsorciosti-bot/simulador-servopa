@@ -374,15 +374,22 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                         </div>
                     </Card>
 
-                    <Card title="Configuração do Lance" className="mb-8">
-                        <div className="mb-6">
-                            <div className="flex p-1 space-x-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl">
+                    <Card
+                        title="Configuração do Lance"
+                        className="mb-8"
+                        action={
+                            <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
                                 <button
                                     type="button"
-                                    onClick={() => setBidType('sorteio')}
-                                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${bidType === 'sorteio'
-                                        ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5'
-                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50'
+                                    onClick={() => {
+                                        setBidType('sorteio');
+                                        handleInputChange('percentualOfertado', 0);
+                                        handleInputChange('percentualEmbutido', 0);
+                                        handleInputChange('lanceNaAssembleia', 0);
+                                    }}
+                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'sorteio'
+                                        ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                         }`}
                                 >
                                     Sorteio
@@ -390,9 +397,9 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                 <button
                                     type="button"
                                     onClick={() => setBidType('fixo')}
-                                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${bidType === 'fixo'
-                                        ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5'
-                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50'
+                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'fixo'
+                                        ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                         }`}
                                 >
                                     Lance Fixo
@@ -400,16 +407,16 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                 <button
                                     type="button"
                                     onClick={() => setBidType('livre')}
-                                    className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${bidType === 'livre'
-                                        ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5'
-                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/50'
+                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'livre'
+                                        ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                         }`}
                                 >
                                     Lance Livre
                                 </button>
                             </div>
-                        </div>
-
+                        }
+                    >
                         {bidType === 'livre' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
                                 <Input label="Lance Ofertado (%)" name="percentualOfertado" type="number" step="0.1" value={inputs.percentualOfertado} onChange={handleInputChange} tooltip="Percentual do crédito que o cliente ofertará como lance. Pode incluir o lance embutido." />
@@ -421,8 +428,14 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                         )}
 
                         {bidType === 'sorteio' && (
-                            <div className="text-center py-8 text-slate-500 dark:text-slate-400 animate-fadeIn bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
-                                <p>Configuração de Sorteio (Em breve)</p>
+                            <div className="text-center py-10 animate-fadeIn bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
+                                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Contemplação por Sorteio</h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">Nesta modalidade, não há oferta de lance. A simulação considerará apenas a "Data de Contemplação" informada acima.</p>
                             </div>
                         )}
 
