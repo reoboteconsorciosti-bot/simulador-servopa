@@ -476,6 +476,12 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                             <div>
                                 <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400">Cenário Inicial (Construção)</h3>
                                 <ResultDisplay label="Crédito Contratado" value={formatCurrency(Number(inputs.credito) || 0)} />
+                                {outputs.valorizacao && outputs.valorizacao > 0 && (
+                                    <>
+                                        <ResultDisplay label={`Rendimento INCC`} value={formatCurrency(outputs.valorizacao)} className="text-emerald-600 dark:text-emerald-400 font-medium" />
+                                        <ResultDisplay label="Valor da Carta Atualizado" value={formatCurrency(outputs.valorCartaAtualizado || 0)} className="text-blue-600 dark:text-blue-400 font-bold" />
+                                    </>
+                                )}
                                 <ResultDisplay label="Parcela Inicial" value={formatCurrency(outputs.valorParcela)} />
                             </div>
 

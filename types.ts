@@ -50,6 +50,9 @@ export interface SimulationOutputs {
   lanceEmbutidoValor: number;
   percentualParcela: number;
   parcContem: number;
+  // Campos de INCC
+  valorCartaAtualizado?: number;
+  valorizacao?: number;
 }
 
 export const initialInputs: SimulationInputs = {

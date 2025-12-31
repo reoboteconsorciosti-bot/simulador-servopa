@@ -224,6 +224,8 @@ export const calculateConstructionSimulation = (inputs: SimulationInputs): Simul
       creditoDisponivel: newCreditoDisponivel,
       lanceOfertadoValor: newLanceOfertadoValor,
       lanceEmbutidoValor: newLanceEmbutidoValor,
+      valorCartaAtualizado: adjustedCredit,
+      valorizacao: adjustedCredit - originalCredit,
     };
   }
 
