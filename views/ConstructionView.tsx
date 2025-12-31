@@ -30,7 +30,6 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
     const [webhookMessage, setWebhookMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [progressMessage, setProgressMessage] = useState<string>('');
     const [contemplationUnit, setContemplationUnit] = useState<'months' | 'years'>('months');
-    const [viewMode, setViewMode] = useState<'consortium' | 'investment'>('consortium');
     const [bidType, setBidType] = useState<'sorteio' | 'fixo' | 'livre'>('livre');
 
     useEffect(() => {
@@ -431,23 +430,11 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                     {outputs ? (
                         <div className="space-y-4 animate-slideUp" key={JSON.stringify(outputs)}>
 
-                            {/* Tabs for Result Views */}
-                            <div className="border-b border-slate-200 dark:border-slate-700 mb-4">
-                                <nav className="-mb-px flex space-x-4" aria-label="Tabs">
-                                    <button onClick={() => setViewMode('consortium')} className={`border-b-2 py-2 px-1 text-sm font-medium ${viewMode === 'consortium' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>
-                                        Consórcio
-                                    </button>
-                                    <button onClick={() => setViewMode('investment')} className={`border-b-2 py-2 px-1 text-sm font-medium ${viewMode === 'investment' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>
-                                        Investimento
-                                    </button>
-                                </nav>
-                            </div>
-
-                            {/* View 1: Standard Consortium Logic */}
-                            {viewMode === 'consortium' && (
-                                <div className="space-y-4 animate-fadeIn">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400">Cenário Inicial (Construção)</h3>
+                            <div className="space-y-8 animate-fadeIn">
+                                {/* Section 1: Standard Consortium Logic */}
+                                <div>
+                                    <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400 border-b border-blue-100 dark:border-blue-900 pb-2">Cenário Inicial (Construção)</h3>
+                                    <div className="space-y-4">
                                         <ResultDisplay label="Crédito Contratado" value={formatCurrency(Number(inputs.credito) || 0)} />
                                         {outputs.valorizacao && outputs.valorizacao > 0 && (
                                             <>
@@ -457,8 +444,11 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                         )}
                                         <ResultDisplay label="Parcela Inicial" value={formatCurrency(outputs.valorParcela)} />
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-2 text-orange-500 dark:text-orange-400">Pós Contemplação</h3>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-bold text-lg mb-2 text-orange-500 dark:text-orange-400 border-b border-orange-100 dark:border-orange-900 pb-2">Pós Contemplação</h3>
+                                    <div className="space-y-4">
                                         <ResultDisplay label="Lance Ofertado" value={formatCurrency(outputs.lanceOfertadoValor)} />
                                         <ResultDisplay label="Lance Embutido" value={formatCurrency(outputs.lanceEmbutidoValor)} />
                                         <ResultDisplay label="Lance Pago (Rec. Próprios)" value={formatCurrency(outputs.lanceOfertadoValor - outputs.lanceEmbutidoValor)} />
@@ -469,36 +459,49 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                         <ResultDisplay label="Crédito Disponível" value={formatCurrency(outputs.creditoDisponivel)} className="text-green-600 dark:text-green-400 font-bold text-xl mt-2" />
                                     </div>
                                 </div>
-                            )}
 
-                            {/* View 2: Investment Projection Logic */}
-                            {viewMode === 'investment' && outputs.investimento && (
-                                <div className="space-y-4 animate-fadeIn">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-2 text-emerald-600 dark:text-emerald-400">Potencial de Lucro</h3>
-                                        <ResultDisplay label="Valor Imóvel (Pronto)" value={formatCurrency(outputs.valorCartaAtualizado ? outputs.valorCartaAtualizado * (1 + (Number(inputs.valorizacaoImediata) || 40) / 100) : 0)} className="font-semibold" />
-                                        <ResultDisplay label="Valor Imóvel (Final)" value={formatCurrency(outputs.investimento.valorImovelFinal)} className="font-bold text-lg" />
-                                        <div className="my-4 border-t border-slate-200 dark:border-slate-700"></div>
-                                        <h3 className="font-bold text-sm mb-2 text-slate-500 uppercase tracking-wide">Fluxo de Caixa Mensal</h3>
-                                        <ResultDisplay label="Renda Aluguel Est." value={formatCurrency(outputs.investimento.rendaAluguelMensal)} className="text-green-600 dark:text-green-400" />
-                                        <ResultDisplay label="Parcela Consórcio" value={`- ${formatCurrency(outputs.parcelasAPagarValor)}`} className="text-red-500 dark:text-red-400" />
-                                        <ResultDisplay label="Lucro Líquido (Reinvestir)" value={formatCurrency(outputs.investimento.lucroMensalInicial)} className="font-bold text-blue-600 dark:text-blue-400 text-lg border-t pt-1 mt-1 border-dashed" />
-                                        <div className="my-4 border-t border-slate-200 dark:border-slate-700"></div>
-                                        <h3 className="font-bold text-lg mb-2 text-purple-600 dark:text-purple-400">Acumulado Total (Patrimônio)</h3>
-                                        <ResultDisplay label="Investimentos (Aportes+Juros)" value={formatCurrency(outputs.investimento.valorAcumuladoInvestimentos)} />
-                                        <ResultDisplay label="Patrimônio Total" value={formatCurrency(outputs.investimento.patrimonioTotal)} className="text-2xl font-black text-slate-800 dark:text-white mt-2" />
-                                        <p className="text-xs text-slate-500 mt-1">Imóvel Valorizado + Renda Fixa Acumulada</p>
-                                        <ResultDisplay label="Renda Passiva Final" value={formatCurrency(outputs.investimento.rendaTotalFinal)} className="bg-emerald-50 dark:bg-emerald-900/30 p-2 rounded-lg mt-4 font-bold text-emerald-700 dark:text-emerald-300" />
+                                {/* Section 2: Investment Projection Logic (Stacked Below) */}
+                                {outputs.investimento && (
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <div className="mb-4">
+                                            <h3 className="font-bold text-lg text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+                                                </svg>
+                                                Potencial de Investimento
+                                            </h3>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">Projeção estimada com base nos parâmetros informados.</p>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <ResultDisplay label="Valor Imóvel (Pronto)" value={formatCurrency(outputs.valorCartaAtualizado ? outputs.valorCartaAtualizado * (1 + (Number(inputs.valorizacaoImediata) || 40) / 100) : 0)} className="font-semibold text-slate-700 dark:text-slate-300" />
+                                            <ResultDisplay label="Valor Imóvel (Final)" value={formatCurrency(outputs.investimento.valorImovelFinal)} className="font-bold text-lg" />
+
+                                            <div className="my-4 border-t border-slate-200 dark:border-slate-700"></div>
+
+                                            <h3 className="font-bold text-sm mb-2 text-slate-500 uppercase tracking-wide">Fluxo de Caixa Mensal</h3>
+                                            <ResultDisplay label="Renda Aluguel Est." value={formatCurrency(outputs.investimento.rendaAluguelMensal)} className="text-green-600 dark:text-green-400" />
+                                            <ResultDisplay label="Parcela Consórcio" value={`- ${formatCurrency(outputs.parcelasAPagarValor)}`} className="text-red-500 dark:text-red-400" />
+                                            <ResultDisplay label="Lucro Líquido (Reinvestir)" value={formatCurrency(outputs.investimento.lucroMensalInicial)} className="font-bold text-blue-600 dark:text-blue-400 text-lg border-t pt-1 mt-1 border-dashed" />
+
+                                            <div className="my-4 border-t border-slate-200 dark:border-slate-700"></div>
+
+                                            <h3 className="font-bold text-lg mb-2 text-purple-600 dark:text-purple-400">Acumulado Total (Patrimônio)</h3>
+                                            <ResultDisplay label="Investimentos (Aportes+Juros)" value={formatCurrency(outputs.investimento.valorAcumuladoInvestimentos)} />
+                                            <ResultDisplay label="Patrimônio Total" value={formatCurrency(outputs.investimento.patrimonioTotal)} className="text-2xl font-black text-slate-800 dark:text-white mt-2" />
+                                            <p className="text-xs text-slate-500 mt-1">Imóvel Valorizado + Renda Fixa Acumulada</p>
+                                            <ResultDisplay label="Renda Passiva Final" value={formatCurrency(outputs.investimento.rendaTotalFinal)} className="bg-emerald-100 dark:bg-emerald-900/50 p-2 rounded-lg mt-4 font-bold text-emerald-800 dark:text-emerald-300 text-center" />
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
 
-                            <div className="pt-6">
-                                <button onClick={handleSendProposal} disabled={isSubmitting || !outputs} className="w-full bg-orange-500 text-white py-4 sm:py-3 rounded-lg hover:bg-orange-600 transition-colors font-bold text-base sm:text-lg shadow-lg shadow-orange-500/30 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:shadow-none">
+                            <div className="pt-8 mt-4 border-t-2 border-slate-100 dark:border-slate-800">
+                                <button onClick={handleSendProposal} disabled={isSubmitting || !outputs} className="w-full bg-orange-500 text-white py-4 sm:py-3 rounded-lg hover:bg-orange-600 transition-colors font-bold text-base sm:text-lg shadow-lg shadow-orange-500/30 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:shadow-none mb-4">
                                     {isSubmitting ? 'Gerando...' : 'Gerar Proposta em PDF'}
                                 </button>
                                 {progressMessage && (
-                                    <div className="mt-4 p-4 rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                                    <div className="p-4 rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                                         <div className="flex items-start gap-3">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -512,7 +515,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                     </div>
                                 )}
                                 {webhookMessage && (
-                                    <div className={`mt-4 p-3 rounded-md text-sm text-center ${webhookMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200'}`}>
+                                    <div className={`p-3 rounded-md text-sm text-center ${webhookMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200'}`}>
                                         {webhookMessage.text}
                                     </div>
                                 )}
