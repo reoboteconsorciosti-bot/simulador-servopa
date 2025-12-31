@@ -3,7 +3,7 @@ import Card from '../components/Card';
 import Input from '../components/Input';
 import Select from '../components/Select';
 import ResultDisplay from '../components/ResultDisplay';
-import { calculateSimulation } from '../services/simulationService';
+import { calculateConstructionSimulation } from '../services/simulationService';
 import { sendProposalWebhook } from '../services/webhookService';
 import { SimulationInputs, SimulationOutputs, initialInputs } from '../types';
 import { useAuth } from '../hooks/useAuth';
@@ -36,7 +36,8 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
             const inputsToLoad = { ...simulationToLoad, consultorNome: consultantName };
 
             setInputs(inputsToLoad);
-            const results = calculateSimulation(inputsToLoad);
+            setInputs(inputsToLoad);
+            const results = calculateConstructionSimulation(inputsToLoad);
             setOutputs(results);
             if (results) {
                 setResultTitle(`Resultados para ${inputsToLoad.clienteNome || 'Cliente'}`);
@@ -65,7 +66,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
     useEffect(() => {
         if (isLiveMode.current) {
             const timer = setTimeout(() => {
-                const newResults = calculateSimulation(inputs);
+                const newResults = calculateConstructionSimulation(inputs);
                 if (newResults) {
                     setOutputs(newResults);
                 }
@@ -126,7 +127,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
             return;
         }
         setErrors({}); // Clear any existing errors
-        const results = calculateSimulation(inputs);
+        const results = calculateConstructionSimulation(inputs);
         setOutputs(results);
         if (results && user) {
             setResultTitle(`Resultados para ${inputs.clienteNome || 'Cliente'}`);
@@ -223,10 +224,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
         }
     };
 
-    const percentualParcelaCalculado = useMemo(() => {
-        const tempOutputs = calculateSimulation(inputs);
-        return tempOutputs ? tempOutputs.percentualParcela : 0;
-    }, [inputs]);
+
 
 
     return (
@@ -249,7 +247,9 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                             <Input label="Taxa Adm. (%)" name="taxa" type="number" step="0.1" value={inputs.taxa} onChange={handleInputChange} tooltip="Percentual total de administração cobrado sobre o valor do crédito durante o prazo." error={errors.taxa} />
                             <Select label="Plano Redução" name="planoLight" value={inputs.planoLight} onChange={handleInputChange} options={[{ value: 1, label: 'Integral (Sem redução)' }, { value: 2, label: '10% de Redução' }, { value: 3, label: '20% de Redução' }, { value: 4, label: '30% de Redução' }, { value: 5, label: '40% de Redução' }, { value: 6, label: '50% de Redução' }]} tooltip="Permite iniciar pagando um percentual menor da parcela, com a diferença sendo paga após a contemplação ou no final do plano." />
                             <Select label="Seguro Prestamista" name="seguroPrestamista" value={inputs.seguroPrestamista} onChange={handleInputChange} options={[{ value: 1, label: 'Automóvel' }, { value: 2, label: 'Imóvel' }, { value: 3, label: 'Sem Seguro' }]} tooltip="Garante a quitação do saldo devedor em caso de imprevistos. O seguro Automóvel possui taxa específica." />
-                            <Input label="% da Parcela" name="percentualParcela" value={`${(percentualParcelaCalculado * 100).toFixed(4)}%`.replace('.', ',')} onChange={() => { }} readOnly tooltip="Cálculo automático do percentual mensal do crédito, considerando a taxa administrativa." />
+                            <Input label="Taxa INCC (%)" name="inccTaxa" type="number" step="0.01" value={inputs.inccTaxa} onChange={handleInputChange} tooltip="Taxa de correção do crédito (INCC)." />
+                            <Select label="Periodicidade INCC" name="inccPeriodo" value={inputs.inccPeriodo} onChange={handleInputChange} options={[{ value: 'semestral', label: 'Semestral' }, { value: 'anual', label: 'Anual' }]} tooltip="Intervalo de aplicação da correção do INCC." />
+                            <Input label="Mês de Contemplação" name="mesContemplacao" type="number" min="1" value={inputs.mesContemplacao} onChange={handleInputChange} tooltip="Mês em que o consórcio foi contemplado para cálculo do rendimento." />
                         </div>
                     </Card>
 

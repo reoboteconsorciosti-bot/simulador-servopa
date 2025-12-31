@@ -34,6 +34,10 @@ export interface SimulationInputs {
   qtdParcelasOfertado: number;
   diluirLance: number;
   lanceNaAssembleia: number | '';
+  // Campos específicos de Construção
+  inccTaxa?: number | '';
+  inccPeriodo?: 'semestral' | 'anual';
+  mesContemplacao?: number | '';
 }
 
 export interface SimulationOutputs {
@@ -62,6 +66,9 @@ export const initialInputs: SimulationInputs = {
   qtdParcelasOfertado: 0,
   diluirLance: 1,
   lanceNaAssembleia: '',
+  inccTaxa: '',
+  inccPeriodo: 'semestral',
+  mesContemplacao: '',
 };
 
 export interface WebhookPayload {

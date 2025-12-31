@@ -21,6 +21,9 @@ const simulationInputSchema = z.object({
     qtdParcelasOfertado: z.union([z.number(), z.string()]).optional(),
     diluirLance: z.union([z.number(), z.string()]).optional(),
     lanceNaAssembleia: z.union([z.number(), z.string()]).optional(),
+    inccTaxa: z.union([z.number(), z.string()]).optional(),
+    inccPeriodo: z.string().optional(),
+    mesContemplacao: z.union([z.number(), z.string()]).optional(),
 }).passthrough(); // Allow other fields if schema evolves but validate core structure
 
 export const saveSimulation = async (req: AuthRequest, res: Response) => {

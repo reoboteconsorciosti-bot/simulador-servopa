@@ -175,3 +175,60 @@ export const calculateSimulation = (inputs: SimulationInputs): SimulationOutputs
     return null;
   }
 };
+
+export const calculateConstructionSimulation = (inputs: SimulationInputs): SimulationOutputs | null => {
+  // First, get standard simulation results to reuse logic
+  const baseResults = calculateSimulation(inputs);
+
+  if (!baseResults) return null;
+
+  // Apply INCC logic if enabled
+  const inccTaxa = Number(inputs.inccTaxa) || 0;
+  const mesContemplacao = Number(inputs.mesContemplacao) || 0;
+  const inccPeriodo = inputs.inccPeriodo || 'semestral';
+
+  if (inccTaxa > 0 && mesContemplacao > 0) {
+    // Calculate appreciation periods
+    let periods = 0;
+    if (inccPeriodo === 'semestral') {
+      periods = Math.floor(mesContemplacao / 6);
+    } else {
+      periods = Math.floor(mesContemplacao / 12);
+    }
+
+    // Compound Interest Formula: A = P(1 + r)^n
+    const rateDecimal = inccTaxa / 100;
+    const originalCredit = Number(inputs.credito) || 0;
+
+    const adjustedCredit = originalCredit * Math.pow((1 + rateDecimal), periods);
+
+    // Update Available Credit
+    // Note: We keep the same 'lanceEmbutidoValor' calculated from base. 
+    // Usually, embedded bid is fixed percentage of original credit or letter? 
+    // If letter appreciates, embedded bid often appreciates too.
+    // Let's assume proportional appreciation for the credit part.
+
+    // For now, let's keep it simple: 
+    // New Available Credit = Adjusted Credit - (Original Embedded Bid? or New Embedded Bid?)
+    // Use case: "Carta de 1M" -> 1.05M.
+    // If embedded bid was 30% (300k), is it now 30% of 1.05M (315k)? Usually yes.
+
+    const percentualEmbutidoDecimal = (Number(inputs.percentualEmbutido) || 0) / 100;
+    const newLanceEmbutidoValor = adjustedCredit * percentualEmbutidoDecimal;
+    const newCreditoDisponivel = adjustedCredit - newLanceEmbutidoValor;
+
+    // Update 'baseResults'
+    // We don't necessarily update "valorParcela" here unless requested, 
+    // but in reality, if letter value increases, parcel increases.
+    // The user specially asked for "Credit Rendering".
+
+    return {
+      ...baseResults,
+      creditoDisponivel: newCreditoDisponivel,
+      lanceEmbutidoValor: newLanceEmbutidoValor, // Update this too for consistency
+      // We could add a field 'valorCartaAtualizado' to schema later if needed to display explicitly
+    };
+  }
+
+  return baseResults;
+};
