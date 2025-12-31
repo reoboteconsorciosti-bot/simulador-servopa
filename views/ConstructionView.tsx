@@ -396,7 +396,12 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setBidType('fixo')}
+                                    onClick={() => {
+                                        setBidType('fixo');
+                                        handleInputChange('percentualOfertado', 30);
+                                        handleInputChange('percentualEmbutido', 30);
+                                        handleInputChange('lanceNaAssembleia', 0);
+                                    }}
                                     className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'fixo'
                                         ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
                                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
@@ -440,8 +445,17 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                         )}
 
                         {bidType === 'fixo' && (
-                            <div className="text-center py-8 text-slate-500 dark:text-slate-400 animate-fadeIn bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700">
-                                <p>Configuração de Lance Fixo (Em breve)</p>
+                            <div className="text-center py-10 animate-fadeIn bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
+                                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Lance Fixo Embutido (30%)</h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+                                    Nesta modalidade, é ofertado um lance fixo de 30% do valor da carta, utilizando 100% do saldo embutido.
+                                    O cliente não desembolsa valor algum (Lance Pago = 0%).
+                                </p>
                             </div>
                         )}
                     </Card>
