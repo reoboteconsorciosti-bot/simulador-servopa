@@ -38,6 +38,11 @@ export interface SimulationInputs {
   inccTaxa?: number | '';
   inccPeriodo?: 'semestral' | 'anual';
   mesContemplacao?: number | '';
+  // Parâmetros de Investimento (Opcionais)
+  aluguelEstimado?: number | ''; // % (ex: 1.0)
+  taxaReinvestimento?: number | ''; // % a.m (ex: 0.8)
+  valorizacaoImovel?: number | ''; // % a.a (ex: 6.0)
+  valorizacaoImediata?: number | ''; // % (ex: 40)
 }
 
 export interface SimulationOutputs {
@@ -53,6 +58,16 @@ export interface SimulationOutputs {
   // Campos de INCC
   valorCartaAtualizado?: number;
   valorizacao?: number;
+  // Campos de Investimento
+  investimento?: {
+    valorImovelFinal: number;
+    lucroMensalInicial: number;
+    rendaAluguelMensal: number;
+    valorAcumuladoInvestimentos: number;
+    rendaPassivaMensal: number;
+    patrimonioTotal: number;
+    rendaTotalFinal: number; // Renda Passiva + Aluguel (Se imóvel mantido)
+  }
 }
 
 export const initialInputs: SimulationInputs = {

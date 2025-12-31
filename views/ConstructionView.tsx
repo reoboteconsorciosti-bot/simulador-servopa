@@ -30,6 +30,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
     const [webhookMessage, setWebhookMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [progressMessage, setProgressMessage] = useState<string>('');
     const [contemplationUnit, setContemplationUnit] = useState<'months' | 'years'>('months');
+    const [viewMode, setViewMode] = useState<'consortium' | 'investment'>('consortium');
     const [bidType, setBidType] = useState<'sorteio' | 'fixo' | 'livre'>('livre');
 
     useEffect(() => {
@@ -374,51 +375,12 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                         </div>
                     </Card>
 
-                    <Card
-                        title="Configuração do Lance"
-                        className="mb-8"
+                    <Card title="Configuração do Lance" className="mb-8"
                         action={
                             <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setBidType('sorteio');
-                                        handleInputChange('percentualOfertado', 0);
-                                        handleInputChange('percentualEmbutido', 0);
-                                        handleInputChange('lanceNaAssembleia', 0);
-                                    }}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'sorteio'
-                                        ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
-                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                                        }`}
-                                >
-                                    Sorteio
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setBidType('fixo');
-                                        handleInputChange('percentualOfertado', 30);
-                                        handleInputChange('percentualEmbutido', 30);
-                                        handleInputChange('lanceNaAssembleia', 0);
-                                    }}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'fixo'
-                                        ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
-                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                                        }`}
-                                >
-                                    Lance Fixo
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setBidType('livre')}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'livre'
-                                        ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
-                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                                        }`}
-                                >
-                                    Lance Livre
-                                </button>
+                                <button type="button" onClick={() => { setBidType('sorteio'); handleInputChange('percentualOfertado', 0); handleInputChange('percentualEmbutido', 0); handleInputChange('lanceNaAssembleia', 0); }} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'sorteio' ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}>Sorteio</button>
+                                <button type="button" onClick={() => { setBidType('fixo'); handleInputChange('percentualOfertado', 30); handleInputChange('percentualEmbutido', 30); handleInputChange('lanceNaAssembleia', 0); }} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'fixo' ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}>Lance Fixo</button>
+                                <button type="button" onClick={() => setBidType('livre')} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${bidType === 'livre' ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}>Lance Livre</button>
                             </div>
                         }
                     >
@@ -431,39 +393,34 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                 <Input label="Mês do Lance (Assembleia)" name="lanceNaAssembleia" type="number" min="1" value={inputs.lanceNaAssembleia} onChange={handleInputChange} tooltip="O número da assembleia em que o cliente pretende dar o lance para ser contemplado." />
                             </div>
                         )}
-
                         {bidType === 'sorteio' && (
                             <div className="text-center py-10 animate-fadeIn bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
-                                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full mb-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
+                                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full mb-3"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Contemplação por Sorteio</h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">Nesta modalidade, não há oferta de lance. A simulação considerará apenas a "Data de Contemplação" informada acima.</p>
                             </div>
                         )}
-
                         {bidType === 'fixo' && (
                             <div className="text-center py-10 animate-fadeIn bg-slate-50 dark:bg-slate-800/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
-                                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full mb-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
+                                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full mb-3"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
                                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">Lance Fixo Embutido (30%)</h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-                                    Nesta modalidade, é ofertado um lance fixo de 30% do valor da carta, utilizando 100% do saldo embutido.
-                                    O cliente não desembolsa valor algum (Lance Pago = 0%).
-                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">Nesta modalidade, é ofertado um lance fixo de 30% do valor da carta, utilizando 100% do saldo embutido. O cliente não desembolsa valor algum (Lance Pago = 0%).</p>
                             </div>
                         )}
                     </Card>
 
+                    {/* NEW: Investment Parameters Section (Accordion Style) */}
+                    <Card title="Parâmetros de Investimento (Opcional)" className="mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Input label="Valorização Imediata (%)" name="valorizacaoImediata" type="number" step="1" placeholder="40" value={inputs.valorizacaoImediata} onChange={handleInputChange} tooltip="Estimativa de valorização do imóvel logo após a construção (ex: 40%)." />
+                            <Input label="Valorização Anual (%)" name="valorizacaoImovel" type="number" step="0.1" placeholder="6.0" value={inputs.valorizacaoImovel} onChange={handleInputChange} tooltip="Estimativa de valorização anual do imóvel a longo prazo (ex: 6%)." />
+                            <Input label="Aluguel Estimado (% do valor)" name="aluguelEstimado" type="number" step="0.1" placeholder="1.0" value={inputs.aluguelEstimado} onChange={handleInputChange} tooltip="Percentual do valor do imóvel cobrado como aluguel mensal (ex: 1%)." />
+                            <Input label="Taxa Reinvestimento (% a.m.)" name="taxaReinvestimento" type="number" step="0.1" placeholder="0.8" value={inputs.taxaReinvestimento} onChange={handleInputChange} tooltip="Rentabilidade mensal prevista para o reinvestimento do lucro (ex: 0,8%)." />
+                        </div>
+                    </Card>
+
                     <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                        <button type="button" onClick={handleClearFields} className="w-full sm:flex-1 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 py-3.5 sm:py-3 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold text-base">
-                            Limpar Campos
-                        </button>
+                        <button type="button" onClick={handleClearFields} className="w-full sm:flex-1 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 py-3.5 sm:py-3 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors font-semibold text-base">Limpar Campos</button>
                         <button type="submit" className="w-full sm:flex-1 bg-blue-600 text-white py-3.5 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-base shadow-lg shadow-blue-500/30">Simular Construção</button>
                     </div>
                 </form>
@@ -473,29 +430,68 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                 <Card title={resultTitle}>
                     {outputs ? (
                         <div className="space-y-4 animate-slideUp" key={JSON.stringify(outputs)}>
-                            <div>
-                                <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400">Cenário Inicial (Construção)</h3>
-                                <ResultDisplay label="Crédito Contratado" value={formatCurrency(Number(inputs.credito) || 0)} />
-                                {outputs.valorizacao && outputs.valorizacao > 0 && (
-                                    <>
-                                        <ResultDisplay label={`Rendimento INCC`} value={formatCurrency(outputs.valorizacao)} className="text-emerald-600 dark:text-emerald-400 font-medium" />
-                                        <ResultDisplay label="Valor da Carta Atualizado" value={formatCurrency(outputs.valorCartaAtualizado || 0)} className="text-blue-600 dark:text-blue-400 font-bold" />
-                                    </>
-                                )}
-                                <ResultDisplay label="Parcela Inicial" value={formatCurrency(outputs.valorParcela)} />
+
+                            {/* Tabs for Result Views */}
+                            <div className="border-b border-slate-200 dark:border-slate-700 mb-4">
+                                <nav className="-mb-px flex space-x-4" aria-label="Tabs">
+                                    <button onClick={() => setViewMode('consortium')} className={`border-b-2 py-2 px-1 text-sm font-medium ${viewMode === 'consortium' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>
+                                        Consórcio
+                                    </button>
+                                    <button onClick={() => setViewMode('investment')} className={`border-b-2 py-2 px-1 text-sm font-medium ${viewMode === 'investment' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>
+                                        Investimento
+                                    </button>
+                                </nav>
                             </div>
 
-                            <div>
-                                <h3 className="font-bold text-lg mb-2 text-orange-500 dark:text-orange-400">Pós Contemplação</h3>
-                                <ResultDisplay label="Lance Ofertado" value={formatCurrency(outputs.lanceOfertadoValor)} />
-                                <ResultDisplay label="Lance Embutido" value={formatCurrency(outputs.lanceEmbutidoValor)} />
-                                <ResultDisplay label="Lance Pago (Rec. Próprios)" value={formatCurrency(outputs.lanceOfertadoValor - outputs.lanceEmbutidoValor)} />
-                                <ResultDisplay label="Qtd. Parcelas à Pagar" value={outputs.parcelasAPagarQtd} />
-                                <ResultDisplay label="Valor da Nova Parcela" value={formatCurrency(outputs.parcelasAPagarValor)} />
-                                <ResultDisplay label="Parcelas Pagas" value={outputs.parcContem} />
-                                <ResultDisplay label="Saldo Devedor" value={formatCurrency(outputs.saldoDevedor)} />
-                                <ResultDisplay label="Crédito Disponível" value={formatCurrency(outputs.creditoDisponivel)} className="text-green-600 dark:text-green-400 font-bold text-xl mt-2" />
-                            </div>
+                            {/* View 1: Standard Consortium Logic */}
+                            {viewMode === 'consortium' && (
+                                <div className="space-y-4 animate-fadeIn">
+                                    <div>
+                                        <h3 className="font-bold text-lg mb-2 text-blue-500 dark:text-blue-400">Cenário Inicial (Construção)</h3>
+                                        <ResultDisplay label="Crédito Contratado" value={formatCurrency(Number(inputs.credito) || 0)} />
+                                        {outputs.valorizacao && outputs.valorizacao > 0 && (
+                                            <>
+                                                <ResultDisplay label={`Rendimento INCC (+${((Number(inputs.inccTaxa) || 0) * (inputs.inccPeriodo === 'semestral' ? Math.floor((Number(inputs.mesContemplacao) || 0) / 6) : Math.floor((Number(inputs.mesContemplacao) || 0) / 12))).toFixed(1)}%)`} value={formatCurrency(outputs.valorizacao)} className="text-emerald-600 dark:text-emerald-400 font-medium" />
+                                                <ResultDisplay label="Valor da Carta Atualizado" value={formatCurrency(outputs.valorCartaAtualizado || 0)} className="text-blue-600 dark:text-blue-400 font-bold" />
+                                            </>
+                                        )}
+                                        <ResultDisplay label="Parcela Inicial" value={formatCurrency(outputs.valorParcela)} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg mb-2 text-orange-500 dark:text-orange-400">Pós Contemplação</h3>
+                                        <ResultDisplay label="Lance Ofertado" value={formatCurrency(outputs.lanceOfertadoValor)} />
+                                        <ResultDisplay label="Lance Embutido" value={formatCurrency(outputs.lanceEmbutidoValor)} />
+                                        <ResultDisplay label="Lance Pago (Rec. Próprios)" value={formatCurrency(outputs.lanceOfertadoValor - outputs.lanceEmbutidoValor)} />
+                                        <ResultDisplay label="Qtd. Parcelas à Pagar" value={outputs.parcelasAPagarQtd} />
+                                        <ResultDisplay label="Valor da Nova Parcela" value={formatCurrency(outputs.parcelasAPagarValor)} />
+                                        <ResultDisplay label="Parcelas Pagas" value={outputs.parcContem} />
+                                        <ResultDisplay label="Saldo Devedor" value={formatCurrency(outputs.saldoDevedor)} />
+                                        <ResultDisplay label="Crédito Disponível" value={formatCurrency(outputs.creditoDisponivel)} className="text-green-600 dark:text-green-400 font-bold text-xl mt-2" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* View 2: Investment Projection Logic */}
+                            {viewMode === 'investment' && outputs.investimento && (
+                                <div className="space-y-4 animate-fadeIn">
+                                    <div>
+                                        <h3 className="font-bold text-lg mb-2 text-emerald-600 dark:text-emerald-400">Potencial de Lucro</h3>
+                                        <ResultDisplay label="Valor Imóvel (Pronto)" value={formatCurrency(outputs.valorCartaAtualizado ? outputs.valorCartaAtualizado * (1 + (Number(inputs.valorizacaoImediata) || 40) / 100) : 0)} className="font-semibold" />
+                                        <ResultDisplay label="Valor Imóvel (Final)" value={formatCurrency(outputs.investimento.valorImovelFinal)} className="font-bold text-lg" />
+                                        <div className="my-4 border-t border-slate-200 dark:border-slate-700"></div>
+                                        <h3 className="font-bold text-sm mb-2 text-slate-500 uppercase tracking-wide">Fluxo de Caixa Mensal</h3>
+                                        <ResultDisplay label="Renda Aluguel Est." value={formatCurrency(outputs.investimento.rendaAluguelMensal)} className="text-green-600 dark:text-green-400" />
+                                        <ResultDisplay label="Parcela Consórcio" value={`- ${formatCurrency(outputs.parcelasAPagarValor)}`} className="text-red-500 dark:text-red-400" />
+                                        <ResultDisplay label="Lucro Líquido (Reinvestir)" value={formatCurrency(outputs.investimento.lucroMensalInicial)} className="font-bold text-blue-600 dark:text-blue-400 text-lg border-t pt-1 mt-1 border-dashed" />
+                                        <div className="my-4 border-t border-slate-200 dark:border-slate-700"></div>
+                                        <h3 className="font-bold text-lg mb-2 text-purple-600 dark:text-purple-400">Acumulado Total (Patrimônio)</h3>
+                                        <ResultDisplay label="Investimentos (Aportes+Juros)" value={formatCurrency(outputs.investimento.valorAcumuladoInvestimentos)} />
+                                        <ResultDisplay label="Patrimônio Total" value={formatCurrency(outputs.investimento.patrimonioTotal)} className="text-2xl font-black text-slate-800 dark:text-white mt-2" />
+                                        <p className="text-xs text-slate-500 mt-1">Imóvel Valorizado + Renda Fixa Acumulada</p>
+                                        <ResultDisplay label="Renda Passiva Final" value={formatCurrency(outputs.investimento.rendaTotalFinal)} className="bg-emerald-50 dark:bg-emerald-900/30 p-2 rounded-lg mt-4 font-bold text-emerald-700 dark:text-emerald-300" />
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="pt-6">
                                 <button onClick={handleSendProposal} disabled={isSubmitting || !outputs} className="w-full bg-orange-500 text-white py-4 sm:py-3 rounded-lg hover:bg-orange-600 transition-colors font-bold text-base sm:text-lg shadow-lg shadow-orange-500/30 disabled:bg-slate-400 dark:disabled:bg-slate-600 disabled:shadow-none">
@@ -524,14 +520,8 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                         </div>
                     ) : (
                         <div className="text-center py-10">
-                            <p className="text-slate-500 dark:text-slate-400">
-                                Preencha os dados e clique em "Simular Construção" para ver os resultados.
-                            </p>
-                            {Object.keys(errors).length > 0 && (
-                                <p className="mt-4 text-sm text-red-600 dark:text-red-400">
-                                    Por favor, corrija os campos destacados em vermelho.
-                                </p>
-                            )}
+                            <p className="text-slate-500 dark:text-slate-400">Preencha os dados e clique em "Simular Construção" para ver os resultados.</p>
+                            {Object.keys(errors).length > 0 && <p className="mt-4 text-sm text-red-600 dark:text-red-400">Por favor, corrija os campos destacados em vermelho.</p>}
                         </div>
                     )}
                 </Card>

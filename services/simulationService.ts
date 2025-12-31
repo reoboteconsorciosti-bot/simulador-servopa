@@ -219,6 +219,47 @@ export const calculateConstructionSimulation = (inputs: SimulationInputs): Simul
     // Update Available Credit
     const newCreditoDisponivel = adjustedCredit - newLanceEmbutidoValor;
 
+    // --- INVESTMENT/WEALTH BUILDING LOGIC ---
+    // Calculates the "Phase 3 & 4" described in the PDF model
+
+    // Default Parameters (from PDF model) if not provided
+    const aluguelPercent = (Number(inputs.aluguelEstimado) || 1.0) / 100;
+    const taxaReinvestimento = (Number(inputs.taxaReinvestimento) || 0.8) / 100;
+    const valorizacaoAnual = (Number(inputs.valorizacaoImovel) || 6.0) / 100;
+    const valorizacaoImediata = (Number(inputs.valorizacaoImediata) || 40.0) / 100;
+
+    // 1. Property Valuation (Construction Phase)
+    // "Imóvel terá um valor inicial estimado de R$ X (com 40% valorização)"
+    const valorImovelPronto = adjustedCredit * (1 + valorizacaoImediata);
+
+    // 2. Continuous Appreciation (Long Term)
+    // Valoriza 6% a.a. pelos meses restantes
+    const parcelasRestantes = baseResults.parcelasAPagarQtd;
+    const anosRestantes = parcelasRestantes / 12;
+    const valorImovelFinal = valorImovelPronto * Math.pow((1 + valorizacaoAnual), anosRestantes);
+
+    // 3. Cash Flow & Reinvestment (The "Wealth Machine")
+    const rendaAluguelMensal = valorImovelPronto * aluguelPercent; // Starts at ~24k
+    const custoParcela = baseResults.parcelasAPagarValor; // Starts at ~8k
+
+    // Monthly Net Profit (Lucro Liquido)
+    // Note: In a real simulation, rent usually adjusts annually (IGPM) and parcel adjusts annually (INCC/IPCA).
+    // For this estimator, we assume the 'gap' stays relative or simply project the initial gap.
+    // The PDF implies a constant reinvestment of the initial gap or a growing one? 
+    // "Esse lucro mensal será reinvestido mensalmente". Let's assume constant for simplicity or simple growth.
+    // Using simple Future Value of an Annuity formula for the monthly profit: FV = PMT * (((1 + r)^n - 1) / r)
+    const lucroMensal = Math.max(0, rendaAluguelMensal - custoParcela);
+
+    let valorAcumuladoInvestimentos = 0;
+    if (lucroMensal > 0) {
+      valorAcumuladoInvestimentos = lucroMensal * ((Math.pow(1 + taxaReinvestimento, parcelasRestantes) - 1) / taxaReinvestimento);
+    }
+
+    // 4. Final Wealth Profile
+    const rendaPassivaMensal = valorAcumuladoInvestimentos * taxaReinvestimento; // Living off interest
+    const patrimonioTotal = valorImovelFinal + valorAcumuladoInvestimentos;
+    const rendaTotalFinal = rendaPassivaMensal + (valorImovelFinal * aluguelPercent); // Rent + Interest
+
     return {
       ...baseResults,
       creditoDisponivel: newCreditoDisponivel,
@@ -226,6 +267,15 @@ export const calculateConstructionSimulation = (inputs: SimulationInputs): Simul
       lanceEmbutidoValor: newLanceEmbutidoValor,
       valorCartaAtualizado: adjustedCredit,
       valorizacao: adjustedCredit - originalCredit,
+      investimento: {
+        valorImovelFinal,
+        lucroMensalInicial: lucroMensal,
+        rendaAluguelMensal,
+        valorAcumuladoInvestimentos,
+        rendaPassivaMensal,
+        patrimonioTotal,
+        rendaTotalFinal
+      }
     };
   }
 
