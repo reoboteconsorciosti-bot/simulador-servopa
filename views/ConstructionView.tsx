@@ -243,7 +243,16 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                     <Card title="Parâmetros do Crédito" className="mb-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Input label="Valor do Crédito (R$)" name="credito" value={inputs.credito} onChange={handleInputChange} mask="currency" tooltip="O valor total que o cliente deseja contratar." error={errors.credito} />
-                            <Input label="Prazo (meses)" name="qtdMeses" type="number" min="1" value={inputs.qtdMeses} onChange={handleInputChange} tooltip="O número total de meses para o pagamento do consórcio." error={errors.qtdMeses} />
+                            <div className="relative">
+                                <Input label="Prazo (meses)" name="qtdMeses" type="number" min="1" value={inputs.qtdMeses} onChange={handleInputChange} tooltip="O número total de meses para o pagamento do consórcio." error={errors.qtdMeses} />
+                                {Number(inputs.qtdMeses) > 0 && (
+                                    <div className="absolute top-0 right-0">
+                                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                                            {(Number(inputs.qtdMeses) / 12).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} anos
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                             <Input label="Taxa Adm. (%)" name="taxa" type="number" step="0.1" value={inputs.taxa} onChange={handleInputChange} tooltip="Percentual total de administração cobrado sobre o valor do crédito durante o prazo." error={errors.taxa} />
                             <Select label="Plano Redução" name="planoLight" value={inputs.planoLight} onChange={handleInputChange} options={[{ value: 1, label: 'Integral (Sem redução)' }, { value: 2, label: '10% de Redução' }, { value: 3, label: '20% de Redução' }, { value: 4, label: '30% de Redução' }, { value: 5, label: '40% de Redução' }, { value: 6, label: '50% de Redução' }]} tooltip="Permite iniciar pagando um percentual menor da parcela, com a diferença sendo paga após a contemplação ou no final do plano." />
                             <Select label="Seguro Prestamista" name="seguroPrestamista" value={inputs.seguroPrestamista} onChange={handleInputChange} options={[{ value: 1, label: 'Automóvel' }, { value: 2, label: 'Imóvel' }, { value: 3, label: 'Sem Seguro' }]} tooltip="Garante a quitação do saldo devedor em caso de imprevistos. O seguro Automóvel possui taxa específica." />
@@ -263,8 +272,8 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                             type="button"
                                             onClick={() => handleInputChange('inccPeriodo', 'semestral')}
                                             className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded transition-colors ${inputs.inccPeriodo === 'semestral'
-                                                    ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
-                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                                ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                                 }`}
                                         >
                                             Semestral
@@ -273,8 +282,8 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                             type="button"
                                             onClick={() => handleInputChange('inccPeriodo', 'anual')}
                                             className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded transition-colors ${inputs.inccPeriodo === 'anual'
-                                                    ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
-                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                                ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                                 }`}
                                         >
                                             Anual
@@ -282,7 +291,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                     </div>
                                 </div>
                             </div>
-                            <Input label="Mês de Contemplação" name="mesContemplacao" type="number" min="1" value={inputs.mesContemplacao} onChange={handleInputChange} tooltip="Mês em que o consórcio foi contemplado para cálculo do rendimento." />
+                            <Input label="Mês da Contemplação" name="mesContemplacao" type="number" min="1" value={inputs.mesContemplacao} onChange={handleInputChange} tooltip="Mês em que o consórcio foi contemplado para cálculo do rendimento." />
                         </div>
                     </Card>
 
