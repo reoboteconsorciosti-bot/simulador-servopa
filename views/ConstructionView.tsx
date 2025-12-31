@@ -79,7 +79,20 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
     }, [inputs]);
 
     const handleInputChange = (name: string, value: string | number) => {
-        setInputs(prev => ({ ...prev, [name]: value }));
+        setInputs(prev => {
+            const newInputs = { ...prev, [name]: value };
+
+            // Auto-correct contemplation month if term becomes smaller than current contemplation
+            if (name === 'qtdMeses') {
+                const newTerm = Number(value);
+                const currentContemplation = Number(prev.mesContemplacao);
+                if (newTerm > 0 && currentContemplation > newTerm) {
+                    newInputs.mesContemplacao = newTerm;
+                }
+            }
+            return newInputs;
+        });
+
         setWebhookMessage(null);
         // Clear error for the current field when user starts typing
         if (errors[name as keyof SimulationInputs]) {
