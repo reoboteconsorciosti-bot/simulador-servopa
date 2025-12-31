@@ -247,7 +247,31 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                             <Input label="Taxa Adm. (%)" name="taxa" type="number" step="0.1" value={inputs.taxa} onChange={handleInputChange} tooltip="Percentual total de administração cobrado sobre o valor do crédito durante o prazo." error={errors.taxa} />
                             <Select label="Plano Redução" name="planoLight" value={inputs.planoLight} onChange={handleInputChange} options={[{ value: 1, label: 'Integral (Sem redução)' }, { value: 2, label: '10% de Redução' }, { value: 3, label: '20% de Redução' }, { value: 4, label: '30% de Redução' }, { value: 5, label: '40% de Redução' }, { value: 6, label: '50% de Redução' }]} tooltip="Permite iniciar pagando um percentual menor da parcela, com a diferença sendo paga após a contemplação ou no final do plano." />
                             <Select label="Seguro Prestamista" name="seguroPrestamista" value={inputs.seguroPrestamista} onChange={handleInputChange} options={[{ value: 1, label: 'Automóvel' }, { value: 2, label: 'Imóvel' }, { value: 3, label: 'Sem Seguro' }]} tooltip="Garante a quitação do saldo devedor em caso de imprevistos. O seguro Automóvel possui taxa específica." />
-                            <div className="relative">
+                            <div>
+                                <div className="flex justify-end mb-1">
+                                    <div className="flex bg-slate-200 dark:bg-slate-700 rounded-md p-1 shadow-inner">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleInputChange('inccPeriodo', 'semestral')}
+                                            className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${inputs.inccPeriodo === 'semestral'
+                                                    ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                                }`}
+                                        >
+                                            Semestral
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleInputChange('inccPeriodo', 'anual')}
+                                            className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${inputs.inccPeriodo === 'anual'
+                                                    ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                                }`}
+                                        >
+                                            Anual
+                                        </button>
+                                    </div>
+                                </div>
                                 <Input
                                     label="Taxa INCC (%)"
                                     name="inccTaxa"
@@ -255,30 +279,8 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                     step="0.01"
                                     value={inputs.inccTaxa}
                                     onChange={handleInputChange}
-                                    tooltip="Taxa de correção do crédito (INCC). Use o botão ao lado para alternar a periodicidade."
+                                    tooltip="Taxa de correção do crédito (INCC)."
                                 />
-                                <div className="absolute top-8 right-2 flex bg-slate-200 dark:bg-slate-700 rounded-md p-1 shadow-inner">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleInputChange('inccPeriodo', 'semestral')}
-                                        className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${inputs.inccPeriodo === 'semestral'
-                                                ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
-                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                                            }`}
-                                    >
-                                        Semestral
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleInputChange('inccPeriodo', 'anual')}
-                                        className={`px-3 py-1 text-xs font-semibold rounded transition-colors ${inputs.inccPeriodo === 'anual'
-                                                ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
-                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                                            }`}
-                                    >
-                                        Anual
-                                    </button>
-                                </div>
                             </div>
                             <Input label="Mês de Contemplação" name="mesContemplacao" type="number" min="1" value={inputs.mesContemplacao} onChange={handleInputChange} tooltip="Mês em que o consórcio foi contemplado para cálculo do rendimento." />
                         </div>
