@@ -29,6 +29,7 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [webhookMessage, setWebhookMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [progressMessage, setProgressMessage] = useState<string>('');
+    const [contemplationUnit, setContemplationUnit] = useState<'months' | 'years'>('months');
 
     useEffect(() => {
         if (simulationToLoad && user) {
@@ -291,7 +292,74 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                     </div>
                                 </div>
                             </div>
-                            <Input label="Mês da Contemplação" name="mesContemplacao" type="number" min="1" value={inputs.mesContemplacao} onChange={handleInputChange} tooltip="Mês em que o consórcio foi contemplado para cálculo do rendimento." />
+                            <div className="relative">
+                                <Input
+                                    label="Mês da Contemplação"
+                                    name="mesContemplacaoDisplay"
+                                    type="number"
+                                    min="0"
+                                    step={contemplationUnit === 'years' ? "0.1" : "1"}
+                                    value={
+                                        contemplationUnit === 'years'
+                                            ? (Number(inputs.mesContemplacao) / 12).toString()
+                                            : inputs.mesContemplacao
+                                    }
+                                    onChange={(name, value) => {
+                                        // Internal conversion logic
+                                        let finalMonths = 0;
+                                        if (contemplationUnit === 'years') {
+                                            finalMonths = Math.round(Number(value) * 12);
+                                        } else {
+                                            finalMonths = Number(value);
+                                        }
+
+                                        // Should not exceed term
+                                        const maxMonths = Number(inputs.qtdMeses) || 999;
+                                        if (finalMonths > maxMonths) {
+                                            // Optional: visual clue or toast? For now just clamp or allow with validation error later?
+                                            // User said "não deve ser maior". Let's clamp it? Or show error.
+                                            // The Input component handles error prop.
+                                            // Let's just set it; validation function handles error message.
+                                        }
+                                        handleInputChange('mesContemplacao', finalMonths);
+                                    }}
+                                    tooltip="Mês ou Ano estimadado da contemplação."
+                                />
+                                <div className="absolute top-0 right-0">
+                                    <div className="flex bg-slate-200 dark:bg-slate-700 rounded-md p-0.5 shadow-inner">
+                                        <button
+                                            type="button"
+                                            onClick={() => setContemplationUnit('months')}
+                                            className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded transition-colors ${contemplationUnit === 'months'
+                                                    ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                                }`}
+                                        >
+                                            Meses
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setContemplationUnit('years')}
+                                            className={`px-2 py-0.5 text-[10px] sm:text-xs font-semibold rounded transition-colors ${contemplationUnit === 'years'
+                                                    ? 'bg-white dark:bg-slate-500 text-blue-600 dark:text-blue-200 shadow-sm'
+                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                                                }`}
+                                        >
+                                            Anos
+                                        </button>
+                                    </div>
+                                </div>
+                                {Number(inputs.mesContemplacao) > 0 && (
+                                    <div className="absolute top-10 right-2 pointer-events-none">
+                                        <span className="text-[10px] sm:text-xs font-medium text-slate-400 dark:text-slate-500">
+                                            {contemplationUnit === 'years'
+                                                ? `${Number(inputs.mesContemplacao)} meses`
+                                                : `${(Number(inputs.mesContemplacao) / 12).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} anos`
+                                            }
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </Card>
 
