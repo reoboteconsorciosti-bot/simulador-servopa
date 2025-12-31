@@ -202,31 +202,28 @@ export const calculateConstructionSimulation = (inputs: SimulationInputs): Simul
 
     const adjustedCredit = originalCredit * Math.pow((1 + rateDecimal), periods);
 
-    // Update Available Credit
-    // Note: We keep the same 'lanceEmbutidoValor' calculated from base. 
-    // Usually, embedded bid is fixed percentage of original credit or letter? 
-    // If letter appreciates, embedded bid often appreciates too.
-    // Let's assume proportional appreciation for the credit part.
+    // Apply Admin Tax Factor (N13) to match base simulation logic (Debt-based calculation)
+    const taxaDecimal = (Number(inputs.taxa) || 0) / 100;
+    const N13 = 1 + taxaDecimal;
 
-    // For now, let's keep it simple: 
-    // New Available Credit = Adjusted Credit - (Original Embedded Bid? or New Embedded Bid?)
-    // Use case: "Carta de 1M" -> 1.05M.
-    // If embedded bid was 30% (300k), is it now 30% of 1.05M (315k)? Usually yes.
-
+    // Update Bid Values
+    // We must scale both Ofertado and Embutido consistently to avoid "Own Resources" discrepancy
+    const percentualOfertadoDecimal = (Number(inputs.percentualOfertado) || 0) / 100;
     const percentualEmbutidoDecimal = (Number(inputs.percentualEmbutido) || 0) / 100;
-    const newLanceEmbutidoValor = adjustedCredit * percentualEmbutidoDecimal;
-    const newCreditoDisponivel = adjustedCredit - newLanceEmbutidoValor;
 
-    // Update 'baseResults'
-    // We don't necessarily update "valorParcela" here unless requested, 
-    // but in reality, if letter value increases, parcel increases.
-    // The user specially asked for "Credit Rendering".
+    // Calculate new values based on Adjusted Credit * (1 + Tax)
+    // This maintains consistency with calculateSimulation's 'sheet match' logic
+    const newLanceOfertadoValor = (adjustedCredit * N13) * percentualOfertadoDecimal;
+    const newLanceEmbutidoValor = (adjustedCredit * N13) * percentualEmbutidoDecimal;
+
+    // Update Available Credit
+    const newCreditoDisponivel = adjustedCredit - newLanceEmbutidoValor;
 
     return {
       ...baseResults,
       creditoDisponivel: newCreditoDisponivel,
-      lanceEmbutidoValor: newLanceEmbutidoValor, // Update this too for consistency
-      // We could add a field 'valorCartaAtualizado' to schema later if needed to display explicitly
+      lanceOfertadoValor: newLanceOfertadoValor,
+      lanceEmbutidoValor: newLanceEmbutidoValor,
     };
   }
 
