@@ -328,12 +328,9 @@ const ConstructionView: React.FC<ConstructionViewProps> = ({ simulationToLoad, o
                                         }
 
                                         // Should not exceed term
-                                        const maxMonths = Number(inputs.qtdMeses) || 999;
-                                        if (finalMonths > maxMonths) {
-                                            // Optional: visual clue or toast? For now just clamp or allow with validation error later?
-                                            // User said "não deve ser maior". Let's clamp it? Or show error.
-                                            // The Input component handles error prop.
-                                            // Let's just set it; validation function handles error message.
+                                        const maxMonths = Number(inputs.qtdMeses);
+                                        if (maxMonths > 0 && finalMonths > maxMonths) {
+                                            finalMonths = maxMonths;
                                         }
                                         handleInputChange('mesContemplacao', finalMonths);
                                     }}
